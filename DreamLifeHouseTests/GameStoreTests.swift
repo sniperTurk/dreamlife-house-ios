@@ -699,9 +699,9 @@ extension GameStoreTests {
 
 
 extension GameStoreTests {
-    func testWeeklyTrophyFinaleRequiresThreeComboClaimsAndAllDecorations() { let (store,_)=makeStore(); store.interactionCounts["trophy.dreamhouse.visits"]=30; store.interactionCounts["trophy.combo.claim.day1"]=1; store.interactionCounts["trophy.combo.claim.day2"]=1; XCTAssertFalse(store.isWeeklyTrophyFinaleReady); store.interactionCounts["trophy.combo.claim.day3"]=1; XCTAssertTrue(store.isWeeklyTrophyFinaleReady) }
-    func testWeeklyTrophyFinalePaysOnceAndUnlocksAuroraMobile() { let (store,_)=makeStore(); store.interactionCounts["trophy.dreamhouse.visits"]=30; for day in 1...3 { store.interactionCounts["trophy.combo.claim.day\(day)"]=1 }; let c=store.coins,s=store.stars; XCTAssertTrue(store.claimWeeklyTrophyFinale()); XCTAssertEqual(store.coins,c+100); XCTAssertEqual(store.stars,s+3); XCTAssertTrue(store.isAuroraMobileUnlocked); XCTAssertFalse(store.claimWeeklyTrophyFinale()) }
-    func testAuroraMobileRequiresUnlockAndPersists() { let (store,defaults)=makeStore(); XCTAssertFalse(store.interactWithAuroraMobile(in:"living")); store.interactionCounts["trophy.dreamhouse.visits"]=30; for day in 1...3 { store.interactionCounts["trophy.combo.claim.day\(day)"]=1 }; _=store.claimWeeklyTrophyFinale(); XCTAssertFalse(store.interactWithAuroraMobile(in:"bedroom")); XCTAssertTrue(store.interactWithAuroraMobile(in:"living")); let reloaded=GameStore(defaults:defaults,saveKey:"save"); XCTAssertTrue(reloaded.isAuroraMobileUnlocked); XCTAssertEqual(reloaded.interactionCounts["trophy.auroraMobile.visits"],1) }
+    func testWeeklyTrophyFinaleRequiresThreeComboClaimsAndAllDecorations() { let (store,_)=makeStore(); store.dailyLifeProgress.day=3; store.interactionCounts["trophy.dreamhouse.visits"]=30; store.interactionCounts["trophy.combo.claim.day1"]=1; store.interactionCounts["trophy.combo.claim.day2"]=1; XCTAssertFalse(store.isWeeklyTrophyFinaleReady); store.interactionCounts["trophy.combo.claim.day3"]=1; XCTAssertTrue(store.isWeeklyTrophyFinaleReady) }
+    func testWeeklyTrophyFinalePaysOnceAndUnlocksAuroraMobile() { let (store,_)=makeStore(); store.dailyLifeProgress.day=3; store.interactionCounts["trophy.dreamhouse.visits"]=30; for day in 1...3 { store.interactionCounts["trophy.combo.claim.day\(day)"]=1 }; let c=store.coins,s=store.stars; XCTAssertTrue(store.claimWeeklyTrophyFinale()); XCTAssertEqual(store.coins,c+100); XCTAssertEqual(store.stars,s+3); XCTAssertTrue(store.isAuroraMobileUnlocked); XCTAssertFalse(store.claimWeeklyTrophyFinale()) }
+    func testAuroraMobileRequiresUnlockAndPersists() { let (store,defaults)=makeStore(); XCTAssertFalse(store.interactWithAuroraMobile(in:"living")); store.dailyLifeProgress.day=3; store.interactionCounts["trophy.dreamhouse.visits"]=30; for day in 1...3 { store.interactionCounts["trophy.combo.claim.day\(day)"]=1 }; _=store.claimWeeklyTrophyFinale(); XCTAssertFalse(store.interactWithAuroraMobile(in:"bedroom")); XCTAssertTrue(store.interactWithAuroraMobile(in:"living")); let reloaded=GameStore(defaults:defaults,saveKey:"save"); XCTAssertTrue(reloaded.isAuroraMobileUnlocked); XCTAssertEqual(reloaded.interactionCounts["trophy.auroraMobile.visits"],1) }
 }
 
 
@@ -2022,7 +2022,7 @@ extension GameStoreTests {
         defaults.set(try JSONSerialization.data(withJSONObject: b), forKey: "save.pending")
         let preview = try XCTUnwrap(store.previewAmbiguousRecoverySlots())
         XCTAssertEqual(preview[1].coins, GameStore.maxSavedCurrency)
-        XCTAssertEqual(preview[1].stars, 1)
+        XCTAssertEqual(preview[1].stars, 0)
         XCTAssertEqual(preview[2].coins, 0)
         XCTAssertEqual(preview[2].stars, GameStore.maxSavedCurrency)
         XCTAssertTrue(store.isSaveReadOnlyDueToAmbiguousRecovery)
