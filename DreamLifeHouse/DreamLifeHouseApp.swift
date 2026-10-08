@@ -17,7 +17,8 @@ struct DreamLifeHouseApp: App {
                          "--dreamlife-ui-test-equal-primary-backup",
                          "--dreamlife-ui-test-equal-primary-pending",
                          "--dreamlife-ui-test-equal-backup-with-pending",
-                         "--dreamlife-ui-test-matching-copies"]
+                         "--dreamlife-ui-test-matching-copies",
+                         "--dreamlife-ui-test-showcase"]
         if arguments.contains(where: { testFlags.contains($0) }) {
             // Test-only, isolated suite; resume is the sole fixture that keeps
             // the previous test launch's progress for persistence assertions.
@@ -151,6 +152,26 @@ struct DreamLifeHouseApp: App {
                     }
                     defaults.removeObject(forKey: "save")
                 }
+            }
+            if arguments.contains("--dreamlife-ui-test-showcase") {
+                // App Store screenshot scene: a lived-in house, an invited friend and a pet.
+                let fixture = GameStore(defaults: defaults, saveKey: "save")
+                fixture.completeOnboarding()
+                fixture.reward(coins: 400, stars: 6)
+                fixture.updateCharacter(name: "Mia", hairStyleID: "curls", hairColorID: "honey",
+                                        skinToneID: "warm", accessoryID: "star")
+                if let party = fixture.outfits.first(where: { $0.id == "party" }) { _ = fixture.selectOutfit(party) }
+                if let lamp = fixture.roomItems.first(where: { $0.id == "lamp" }) {
+                    _ = fixture.selectRoomItem(lamp, in: "living", slot: "side")
+                }
+                if let plant = fixture.roomItems.first(where: { $0.id == "plant" }) {
+                    _ = fixture.selectRoomItem(plant, in: "bedroom", slot: "main")
+                }
+                _ = fixture.inviteFriend("luna")
+                _ = fixture.movePet(to: "living")
+                fixture.updatePet(name: "Pip", species: "cat")
+                for _ in 0..<2 { _ = fixture.performInteraction("dance", in: "living") }
+                _ = fixture.socialActivity("dance", with: "luna")
             }
             let activeStore = GameStore(defaults: defaults, saveKey: "save")
             if arguments.contains("--dreamlife-ui-test-external") {

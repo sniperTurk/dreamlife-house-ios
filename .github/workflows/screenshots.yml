@@ -1,0 +1,91 @@
+name: App Store screenshots
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/screenshots.yml
+      - DreamLifeHouseUITests/ScreenshotTests.swift
+      - ci/upload_screenshots.py
+      - ci/screenshots.trigger
+
+permissions:
+  contents: write
+
+jobs:
+  screenshots:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select newest Xcode 26
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          sudo xcode-select -s "${XCODE:-$(ls -d /Applications/Xcode*.app | sort -V | tail -1)}"
+          xcodebuild -version
+
+      - name: Generate project
+        run: brew install xcodegen && xcodegen generate
+
+      - name: Capture on iPhone (6.9") and iPad (13")
+        run: |
+          set -e
+          pick() { xcrun simctl list devices available -j | python3 -c "
+          import json,sys,re
+          want=sys.argv[1]
+          d=json.load(sys.stdin)['devices']
+          c=[(k,x) for k,v in d.items() if 'iOS' in k for x in v if re.search(want,x['name'])]
+          c.sort(key=lambda kx:(kx[0],kx[1]['name']))
+          print(c[-1][1]['udid'] if c else '')" "$1"; }
+          IPHONE=$(pick 'iPhone .*Pro Max')
+          IPAD=$(pick 'iPad Pro 13')
+          echo "iPhone=$IPHONE iPad=$IPAD"
+          mkdir -p shots/iphone shots/ipad
+          for pair in "iphone:$IPHONE" "ipad:$IPAD"; do
+            kind=${pair%%:*}; udid=${pair#*:}
+            [ -n "$udid" ] || { echo "::warning::No simulator for $kind"; continue; }
+            xcrun simctl boot "$udid" || true
+            xcrun simctl bootstatus "$udid" -b
+            xcrun simctl status_bar "$udid" override --time "9:41" --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4 || true
+            xcodebuild test -project DreamLifeHouse.xcodeproj -scheme DreamLifeHouse \
+              -destination "id=$udid" -only-testing:DreamLifeHouseUITests/ScreenshotTests \
+              -resultBundlePath "build/$kind.xcresult" CODE_SIGNING_ALLOWED=NO > "build-$kind.log" 2>&1 || { tail -40 "build-$kind.log"; exit 1; }
+            xcrun xcresulttool export attachments --path "build/$kind.xcresult" --output-path "raw-$kind"
+            python3 - "$kind" <<'PY'
+          import json, os, shutil, sys
+          kind = sys.argv[1]; raw = f"raw-{kind}"
+          manifest = json.load(open(os.path.join(raw, "manifest.json")))
+          for test in manifest:
+              for a in test.get("attachments", []):
+                  name = a.get("suggestedHumanReadableName", a["exportedFileName"])
+                  base = name.split("_")[0]
+                  shutil.copy(os.path.join(raw, a["exportedFileName"]), f"shots/{kind}/{base}.png")
+          print(kind, sorted(os.listdir(f"shots/{kind}")))
+          PY
+            xcrun simctl shutdown "$udid" || true
+          done
+          sips -g pixelWidth -g pixelHeight shots/*/*.png | head -20
+
+      - name: Upload screenshots to App Store Connect
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          python3 -m pip install --quiet --break-system-packages pyjwt cryptography 2>/dev/null || python3 -m pip install --quiet pyjwt cryptography
+          mkdir -p "$RUNNER_TEMP/keys"; export KEY_PATH="$RUNNER_TEMP/keys/key.p8"
+          printf '%s\n' "$ASC_KEY_P8" > "$KEY_PATH"
+          python3 ci/upload_screenshots.py shots/iphone shots/ipad
+          rm -rf "$RUNNER_TEMP/keys"
+
+      - name: Publish screenshots to the 'screenshots' branch for review
+        if: always()
+        run: |
+          [ -d shots ] || exit 0
+          cd shots
+          git init -q -b screenshots
+          git config user.name "github-actions"; git config user.email "actions@users.noreply.github.com"
+          git add -A && git commit -qm "Screenshots from run $GITHUB_RUN_NUMBER"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" screenshots
