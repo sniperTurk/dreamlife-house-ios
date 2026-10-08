@@ -13,17 +13,22 @@ final class ScreenshotTests: XCTestCase {
         add(shot)
     }
 
+    // iPhone uses a bottom tab bar; iPadOS 26 shows a floating top tab bar whose
+    // items are not always exposed as tab-bar buttons, so fall back gracefully.
     private func tab(_ app: XCUIApplication, _ label: String) {
-        let button = app.tabBars.buttons[label]
-        if button.waitForExistence(timeout: 5) { button.tap() }
-        else if app.buttons[label].waitForExistence(timeout: 3) { app.buttons[label].tap() }
+        let candidates = [app.tabBars.buttons[label], app.buttons[label].firstMatch,
+                          app.descendants(matching: .any).matching(identifier: label).firstMatch,
+                          app.staticTexts[label].firstMatch]
+        for element in candidates where element.waitForExistence(timeout: 2) && element.isHittable {
+            element.tap(); return
+        }
     }
 
     func testCaptureAppStoreScreenshots() {
         let app = XCUIApplication()
         app.launchArguments = ["--dreamlife-ui-test-showcase"]
         app.launch()
-        XCTAssertTrue(app.tabBars.buttons["House"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.descendants(matching: .any)["topbar.coins"].firstMatch.waitForExistence(timeout: 20))
         snap(app, "01-house")
 
         tab(app, "Me")
