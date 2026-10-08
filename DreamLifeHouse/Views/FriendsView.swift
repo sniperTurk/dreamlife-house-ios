@@ -4,15 +4,15 @@ import SwiftUI
 // views so Xcode can type-check it, and given friend avatars. Logic unchanged.
 struct FriendsView: View {
     @EnvironmentObject var store: GameStore
-    @State private var message = "Invite a friend for a hangout."
+    @State private var message = loc("Invite a friend for a hangout.", "Takılmak için bir arkadaşını davet et.")
 
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
                 VStack(spacing: 4) {
-                    Text("DreamLife Friends").font(.title2.weight(.black)).foregroundStyle(Theme.ink)
+                    Text(loc("DreamLife Friends", "DreamLife Arkadaşları")).font(.title2.weight(.black)).foregroundStyle(Theme.ink)
                         .accessibilityAddTraits(.isHeader)
-                    Text("Invite friends into the house, build friendship levels, and unlock original party mini-games.")
+                    Text(loc("Invite friends into the house, build friendship levels, and unlock original party mini-games.", "Arkadaşlarını eve davet et, arkadaşlık seviyeni yükselt ve özgün parti mini oyunlarını aç."))
                         .font(.subheadline).foregroundStyle(Theme.inkSoft).multilineTextAlignment(.center)
                 }
                 .padding(.horizontal)
@@ -31,7 +31,7 @@ struct FriendsView: View {
                 BadgeCollectionCard(message: $message)
                 if !store.ownedFriendKeepsakes.isEmpty { KeepsakeCard(message: $message) }
 
-                Label("Party wins: \(store.socialProgress.partyWins)", systemImage: "party.popper.fill")
+                Label(loc("Party wins: \(store.socialProgress.partyWins)", "Parti galibiyeti: \(store.socialProgress.partyWins)"), systemImage: "party.popper.fill")
                     .font(.caption.weight(.heavy)).foregroundStyle(Theme.inkSoft)
             }
             .padding(.horizontal)
@@ -52,8 +52,8 @@ private struct FriendCard: View {
         VStack(alignment: .leading, spacing: 12) {
             header
             if isActive {
-                Picker("Room", selection: Binding(get: { store.socialProgress.friendRoomID ?? "living" }, set: { _ = store.moveFriend(to: $0) })) {
-                    ForEach(store.rooms) { Text($0.name).tag($0.id) }
+                Picker(loc("Room", "Oda"), selection: Binding(get: { store.socialProgress.friendRoomID ?? "living" }, set: { _ = store.moveFriend(to: $0) })) {
+                    ForEach(store.rooms) { Text(trName($0.name)).tag($0.id) }
                 }
                 .pickerStyle(.menu)
                 .tint(Theme.pink)
@@ -78,14 +78,14 @@ private struct FriendCard: View {
                     Text(friend.name).font(.headline.weight(.heavy)).foregroundStyle(Theme.ink)
                     Image(systemName: friend.icon).font(.caption.weight(.bold)).foregroundStyle(Theme.lavender)
                 }
-                Text("Friendship Lv. \(store.friendshipLevel(for: friend.id)) • \(store.friendshipXP(for: friend.id)) XP • \(store.hangoutCount(for: friend.id)) hangouts")
+                Text(loc("Friendship Lv. \(store.friendshipLevel(for: friend.id)) • \(store.friendshipXP(for: friend.id)) XP • \(store.hangoutCount(for: friend.id)) hangouts", "Arkadaşlık Sv. \(store.friendshipLevel(for: friend.id)) • \(store.friendshipXP(for: friend.id)) XP • \(store.hangoutCount(for: friend.id)) buluşma"))
                     .font(.caption).foregroundStyle(Theme.inkSoft)
-                Text("Loves: \(friend.favoriteActivity.capitalized)").font(.caption2.weight(.bold)).foregroundStyle(Theme.pink)
+                Text(loc("Loves: \(friend.favoriteActivity.capitalized)", "Sever: \(activityName(friend.favoriteActivity))")).font(.caption2.weight(.bold)).foregroundStyle(Theme.pink)
             }
             Spacer(minLength: 4)
-            Button(isActive ? "Invited" : "Invite") {
+            Button(isActive ? loc("Invited", "Davetli") : loc("Invite", "Davet Et")) {
                 if store.inviteFriend(friend.id) {
-                    message = "\(friend.name) joined your house!"
+                    message = loc("\(friend.name) joined your house!", "\(friend.name) evine geldi!")
                     Feedback.play(.success, settings: store.playerSettings)
                 }
             }
@@ -96,68 +96,68 @@ private struct FriendCard: View {
     private var activities: some View {
         VStack(spacing: 8) {
             HStack(spacing: 8) {
-                SocialButton(title: "Dance", icon: "music.note") { act("dance") }
-                SocialButton(title: "Decorate", icon: "lamp.table.fill") { act("decorate") }
-                SocialButton(title: "Garden", icon: "leaf.fill") { act("garden") }
+                SocialButton(title: loc("Dance", "Dans"), icon: "music.note") { act("dance") }
+                SocialButton(title: loc("Decorate", "Dekorasyon"), icon: "lamp.table.fill") { act("decorate") }
+                SocialButton(title: loc("Garden", "Bahçe"), icon: "leaf.fill") { act("garden") }
             }
             HStack(spacing: 8) {
-                SocialButton(title: "Style", icon: "tshirt.fill") { act("style") }
-                SocialButton(title: "Cook", icon: "fork.knife") { act("cook") }
+                SocialButton(title: loc("Style", "Stil"), icon: "tshirt.fill") { act("style") }
+                SocialButton(title: loc("Cook", "Yemek"), icon: "fork.knife") { act("cook") }
             }
         }
     }
 
     private var questOne: some View {
-        QuestProgress(title: "Friend Quest: do \(friend.favoriteActivity.capitalized) together 3 times",
+        QuestProgress(title: loc("Friend Quest: do \(friend.favoriteActivity.capitalized) together 3 times", "Arkadaş Görevi: 3 kez birlikte \(activityName(friend.favoriteActivity))"),
                       progress: store.friendQuestProgress(for: friend.id), total: 3) {
             if store.isFriendQuestClaimed(friend.id) {
-                Label("Quest complete", systemImage: "checkmark.seal.fill").font(.caption).foregroundStyle(Theme.mint)
+                Label(loc("Quest complete", "Görev tamamlandı"), systemImage: "checkmark.seal.fill").font(.caption).foregroundStyle(Theme.mint)
             } else if store.friendQuestProgress(for: friend.id) >= 3 {
-                Button("Claim 60 coins + 2 stars") { if store.claimFriendQuest(friend.id) { success("\(friend.name)'s friend quest complete!") } }
+                Button(loc("Claim 60 coins + 2 stars", "60 jeton + 2 yıldız al")) { if store.claimFriendQuest(friend.id) { success(loc("\(friend.name)'s friend quest complete!", "\(friend.name) ile arkadaşlık görevi tamamlandı!")) } }
                     .buttonStyle(PillButtonStyle())
             } else {
-                Text("\(store.friendQuestProgress(for: friend.id))/3 favorite hangouts").font(.caption2).foregroundStyle(Theme.inkSoft)
+                Text(loc("\(store.friendQuestProgress(for: friend.id))/3 favorite hangouts", "\(store.friendQuestProgress(for: friend.id))/3 favori buluşma")).font(.caption2).foregroundStyle(Theme.inkSoft)
             }
         }
     }
 
     private var questTwo: some View {
-        QuestProgress(title: "Story Quest 2: celebrate together twice",
+        QuestProgress(title: loc("Story Quest 2: celebrate together twice", "Hikâye Görevi 2: iki kez birlikte kutlayın"),
                       progress: store.friendStoryPartyProgress(for: friend.id), total: 2) {
             if store.isFriendStoryPartyClaimed(friend.id) {
-                Label("Story chapter complete", systemImage: "book.closed.fill").font(.caption).foregroundStyle(Theme.mint)
+                Label(loc("Story chapter complete", "Hikâye bölümü tamamlandı"), systemImage: "book.closed.fill").font(.caption).foregroundStyle(Theme.mint)
             } else if store.friendStoryPartyProgress(for: friend.id) >= 2 {
-                Button("Claim 80 coins + 3 stars") { if store.claimFriendStoryParty(friend.id) { success("\(friend.name)'s story chapter complete!") } }
+                Button(loc("Claim 80 coins + 3 stars", "80 jeton + 3 yıldız al")) { if store.claimFriendStoryParty(friend.id) { success(loc("\(friend.name)'s story chapter complete!", "\(friend.name) ile hikâye bölümü tamamlandı!")) } }
                     .buttonStyle(PillButtonStyle())
             } else {
-                Text("\(store.friendStoryPartyProgress(for: friend.id))/2 party moments").font(.caption2).foregroundStyle(Theme.inkSoft)
+                Text(loc("\(store.friendStoryPartyProgress(for: friend.id))/2 party moments", "\(store.friendStoryPartyProgress(for: friend.id))/2 parti anı")).font(.caption2).foregroundStyle(Theme.inkSoft)
             }
         }
     }
 
     private var questThree: some View {
-        let roomName = store.rooms.first(where: { $0.id == store.friendStoryRoomTarget(for: friend.id) })?.name ?? "special room"
-        return QuestProgress(title: "Story Quest 3: \(roomName) memory",
+        let roomName = store.rooms.first(where: { $0.id == store.friendStoryRoomTarget(for: friend.id) })?.name ?? loc("special room", "özel oda")
+        return QuestProgress(title: loc("Story Quest 3: \(roomName) memory", "Hikâye Görevi 3: \(trName(roomName)) anısı"),
                              progress: store.friendStoryRoomProgress(for: friend.id), total: 2) {
             if store.isFriendStoryRoomClaimed(friend.id) {
                 VStack(alignment: .leading, spacing: 5) {
-                    Label("Room chapter complete", systemImage: "house.and.flag.fill").font(.caption).foregroundStyle(Theme.mint)
+                    Label(loc("Room chapter complete", "Oda bölümü tamamlandı"), systemImage: "house.and.flag.fill").font(.caption).foregroundStyle(Theme.mint)
                     if let keepsake = store.friendKeepsake(for: friend.id) {
                         if store.isFriendKeepsakeClaimed(friend.id) {
-                            Label("Keepsake: \(keepsake.name)", systemImage: keepsake.icon).font(.caption.bold()).foregroundStyle(Theme.ink)
+                            Label(loc("Keepsake: \(keepsake.name)", "Hatıra: \(trName(keepsake.name))"), systemImage: keepsake.icon).font(.caption.bold()).foregroundStyle(Theme.ink)
                         } else {
-                            Button("Collect \(keepsake.name)") {
-                                if store.claimFriendKeepsake(friend.id) { success("A special friendship keepsake joined your collection!") }
+                            Button(loc("Collect \(keepsake.name)", "Topla: \(trName(keepsake.name))")) {
+                                if store.claimFriendKeepsake(friend.id) { success(loc("A special friendship keepsake joined your collection!", "Koleksiyonuna özel bir arkadaşlık hatırası eklendi!")) }
                             }
                             .buttonStyle(PillButtonStyle(color: Theme.lavender))
                         }
                     }
                 }
             } else if store.friendStoryRoomProgress(for: friend.id) >= 2 {
-                Button("Claim 100 coins + 4 stars") { if store.claimFriendStoryRoom(friend.id) { success("\(friend.name)'s room story complete!") } }
+                Button(loc("Claim 100 coins + 4 stars", "100 jeton + 4 yıldız al")) { if store.claimFriendStoryRoom(friend.id) { success(loc("\(friend.name)'s room story complete!", "\(friend.name) ile oda hikâyesi tamamlandı!")) } }
                     .buttonStyle(PillButtonStyle())
             } else {
-                Text("Move here, then do \(friend.favoriteActivity.capitalized) together twice (\(store.friendStoryRoomProgress(for: friend.id))/2)")
+                Text(loc("Move here, then do \(friend.favoriteActivity.capitalized) together twice (\(store.friendStoryRoomProgress(for: friend.id))/2)", "Buraya gelin, sonra iki kez birlikte \(activityName(friend.favoriteActivity)) (\(store.friendStoryRoomProgress(for: friend.id))/2)"))
                     .font(.caption2).foregroundStyle(Theme.inkSoft)
             }
         }
@@ -166,20 +166,20 @@ private struct FriendCard: View {
     @ViewBuilder private var miniGames: some View {
         if store.friendshipLevel(for: friend.id) >= 2 {
             HStack(spacing: 8) {
-                SocialButton(title: "Tea Party", icon: "cup.and.saucer.fill", tint: Theme.peach) { mini("teaParty") }
+                SocialButton(title: loc("Tea Party", "Çay Partisi"), icon: "cup.and.saucer.fill", tint: Theme.peach) { mini("teaParty") }
                 if store.friendshipLevel(for: friend.id) >= 3 {
-                    SocialButton(title: "Talent Show", icon: "star.fill", tint: Theme.sun) { mini("talentShow") }
+                    SocialButton(title: loc("Talent Show", "Yetenek Gösterisi"), icon: "star.fill", tint: Theme.sun) { mini("talentShow") }
                 }
             }
         } else {
-            Label("Reach Friendship Lv. 2 to unlock Tea Party.", systemImage: "lock.fill")
+            Label(loc("Reach Friendship Lv. 2 to unlock Tea Party.", "Çay Partisi için Arkadaşlık Seviyesi 2\'ye ulaş."), systemImage: "lock.fill")
                 .font(.caption).foregroundStyle(Theme.inkSoft)
         }
     }
 
     private func success(_ text: String) { message = text; Feedback.play(.success, settings: store.playerSettings) }
-    private func act(_ action: String) { if store.socialActivity(action, with: friend.id) { success("Hangout complete with \(friend.name)! Friendship grew.") } }
-    private func mini(_ action: String) { if store.playFriendMiniGame(action, with: friend.id) { success("Mini-game complete! Bonus friendship, coins and a star earned.") } }
+    private func act(_ action: String) { if store.socialActivity(action, with: friend.id) { success(loc("Hangout complete with \(friend.name)! Friendship grew.", "\(friend.name) ile buluşma tamamlandı! Arkadaşlık güçlendi.")) } }
+    private func mini(_ action: String) { if store.playFriendMiniGame(action, with: friend.id) { success(loc("Mini-game complete! Bonus friendship, coins and a star earned.", "Mini oyun tamamlandı! Ek arkadaşlık, jeton ve bir yıldız kazandın.")) } }
 }
 
 private struct QuestProgress<Footer: View>: View {
@@ -206,16 +206,16 @@ private struct BadgeCollectionCard: View {
     @Binding var message: String
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionTitle(title: "Surprise Badges", icon: "rosette")
-            Text("Collect all five original room-event badges.").font(.caption).foregroundStyle(Theme.inkSoft)
+            SectionTitle(title: loc("Surprise Badges", "Sürpriz Rozetler"), icon: "rosette")
+            Text(loc("Collect all five original room-event badges.", "Beş özgün oda etkinliği rozetinin hepsini topla.")).font(.caption).foregroundStyle(Theme.inkSoft)
             ProgressView(value: Double(store.surpriseBadgeProgress), total: Double(store.surpriseBadges.count)).tint(Theme.sun)
-            Text("\(store.surpriseBadgeProgress)/\(store.surpriseBadges.count) badges collected").font(.caption2).foregroundStyle(Theme.inkSoft)
+            Text(loc("\(store.surpriseBadgeProgress)/\(store.surpriseBadges.count) badges collected", "\(store.surpriseBadgeProgress)/\(store.surpriseBadges.count) rozet toplandı")).font(.caption2).foregroundStyle(Theme.inkSoft)
             HStack(alignment: .top) {
                 ForEach(store.surpriseBadges) { badge in
                     let earned = store.hasSurpriseBadge(for: badge.roomID)
                     VStack(spacing: 4) {
                         IconBadge(icon: earned ? badge.icon : "lock.fill", tint: earned ? Theme.roomTint(badge.roomID) : Color.gray.opacity(0.5), size: 40)
-                        Text(earned ? badge.name : "Locked").font(.caption2.bold()).foregroundStyle(Theme.ink)
+                        Text(earned ? trName(badge.name) : loc("Locked", "Kilitli")).font(.caption2.bold()).foregroundStyle(Theme.ink)
                             .multilineTextAlignment(.center).lineLimit(2).minimumScaleFactor(0.8)
                     }
                     .frame(maxWidth: .infinity)
@@ -223,11 +223,11 @@ private struct BadgeCollectionCard: View {
                 }
             }
             if store.isSurpriseBadgeCollectionRewardClaimed {
-                Label("Collection complete • 150 coins + 5 stars claimed", systemImage: "trophy.fill").font(.caption.bold()).foregroundStyle(Theme.mint)
+                Label(loc("Collection complete • 150 coins + 5 stars claimed", "Koleksiyon tamam • 150 jeton + 5 yıldız alındı"), systemImage: "trophy.fill").font(.caption.bold()).foregroundStyle(Theme.mint)
             } else if store.isSurpriseBadgeCollectionComplete {
-                Button("Claim Collection Reward • 150 coins + 5 stars") {
+                Button(loc("Claim Collection Reward • 150 coins + 5 stars", "Koleksiyon Ödülünü Al • 150 jeton + 5 yıldız")) {
                     if store.claimSurpriseBadgeCollectionReward() {
-                        message = "Surprise Badge collection complete!"
+                        message = loc("Surprise Badge collection complete!", "Sürpriz Rozet koleksiyonu tamamlandı!")
                         Feedback.play(.success, settings: store.playerSettings)
                     }
                 }
@@ -245,18 +245,18 @@ private struct KeepsakeCard: View {
     @Binding var message: String
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionTitle(title: "Friendship Keepsakes", icon: "heart.text.square.fill")
-            Text("Display a keepsake in one room to make your shared memories part of the house.").font(.caption).foregroundStyle(Theme.inkSoft)
+            SectionTitle(title: loc("Friendship Keepsakes", "Arkadaşlık Hatıraları"), icon: "heart.text.square.fill")
+            Text(loc("Display a keepsake in one room to make your shared memories part of the house.", "Ortak anılarınız evin bir parçası olsun diye bir hatırayı bir odada sergile.")).font(.caption).foregroundStyle(Theme.inkSoft)
             ForEach(store.ownedFriendKeepsakes) { item in
                 VStack(alignment: .leading, spacing: 6) {
-                    Label(item.name, systemImage: item.icon).font(.caption.bold()).foregroundStyle(Theme.ink)
+                    Label(trName(item.name), systemImage: item.icon).font(.caption.bold()).foregroundStyle(Theme.ink)
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 6) {
                             ForEach(store.rooms) { room in
                                 let shown = store.displayedFriendKeepsakes(in: room.id).contains(where: { $0.id == item.id })
-                                Button(shown ? "✓ \(room.name)" : room.name) {
+                                Button(shown ? "✓ \(trName(room.name))" : trName(room.name)) {
                                     _ = store.setFriendKeepsake(item.id, displayed: true, in: room.id)
-                                    message = "\(item.name) is now displayed in the \(room.name)."
+                                    message = loc("\(item.name) is now displayed in the \(room.name).", "\(trName(item.name)) artık burada sergileniyor: \(trName(room.name)).")
                                     Feedback.play(.tap, settings: store.playerSettings)
                                 }
                                 .buttonStyle(PillButtonStyle(color: shown ? Theme.mint : Theme.roomTint(room.id)))

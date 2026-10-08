@@ -13,23 +13,23 @@ struct RoomLayout {
     static func forRoom(_ roomID: String) -> RoomLayout {
         switch roomID {
         case "bedroom":
-            return RoomLayout(actionZone: CGRect(x: 0.6, y: 0.5, width: 0.38, height: 0.42), zoneLabel: "Bed · drop here to rest",
+            return RoomLayout(actionZone: CGRect(x: 0.6, y: 0.5, width: 0.38, height: 0.42), zoneLabel: loc("Bed · drop here to rest", "Yatak · dinlenmek için bırak"),
                               mainDecor: CGPoint(x: 0.36, y: 0.80), sideDecor: CGPoint(x: 0.12, y: 0.76),
                               friendSpot: CGPoint(x: 0.24, y: 0.52), petSpot: CGPoint(x: 0.5, y: 0.9))
         case "kitchen":
-            return RoomLayout(actionZone: CGRect(x: 0.6, y: 0.42, width: 0.38, height: 0.5), zoneLabel: "Snack bar · drop here",
+            return RoomLayout(actionZone: CGRect(x: 0.6, y: 0.42, width: 0.38, height: 0.5), zoneLabel: loc("Snack bar · drop here", "Atıştırma · buraya bırak"),
                               mainDecor: CGPoint(x: 0.36, y: 0.80), sideDecor: CGPoint(x: 0.12, y: 0.76),
                               friendSpot: CGPoint(x: 0.24, y: 0.52), petSpot: CGPoint(x: 0.5, y: 0.9))
         case "bathroom":
-            return RoomLayout(actionZone: CGRect(x: 0.6, y: 0.4, width: 0.38, height: 0.52), zoneLabel: "Shower · drop here",
+            return RoomLayout(actionZone: CGRect(x: 0.6, y: 0.4, width: 0.38, height: 0.52), zoneLabel: loc("Shower · drop here", "Duş · buraya bırak"),
                               mainDecor: CGPoint(x: 0.36, y: 0.80), sideDecor: CGPoint(x: 0.12, y: 0.76),
                               friendSpot: CGPoint(x: 0.24, y: 0.52), petSpot: CGPoint(x: 0.5, y: 0.9))
         case "garden":
-            return RoomLayout(actionZone: CGRect(x: 0.02, y: 0.42, width: 0.4, height: 0.5), zoneLabel: "Play area · drop here",
+            return RoomLayout(actionZone: CGRect(x: 0.02, y: 0.42, width: 0.4, height: 0.5), zoneLabel: loc("Play area · drop here", "Oyun alanı · buraya bırak"),
                               mainDecor: CGPoint(x: 0.64, y: 0.80), sideDecor: CGPoint(x: 0.88, y: 0.76),
                               friendSpot: CGPoint(x: 0.76, y: 0.52), petSpot: CGPoint(x: 0.5, y: 0.9))
         default: // living
-            return RoomLayout(actionZone: CGRect(x: 0.02, y: 0.5, width: 0.38, height: 0.42), zoneLabel: "Dance floor · drop here",
+            return RoomLayout(actionZone: CGRect(x: 0.02, y: 0.5, width: 0.38, height: 0.42), zoneLabel: loc("Dance floor · drop here", "Dans pisti · buraya bırak"),
                               mainDecor: CGPoint(x: 0.64, y: 0.80), sideDecor: CGPoint(x: 0.88, y: 0.76),
                               friendSpot: CGPoint(x: 0.76, y: 0.52), petSpot: CGPoint(x: 0.5, y: 0.9))
         }

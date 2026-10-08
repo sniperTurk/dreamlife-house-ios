@@ -6,10 +6,10 @@ struct KitchenView: View {
     @State private var recipe = "Rainbow Cupcake"
 
     private let steps: [(title: String, icon: String, tint: Color)] = [
-        ("Add flour", "bag.fill", Color(hex: 0xE8C48F)),
-        ("Mix", "arrow.triangle.2.circlepath", Color(hex: 0xA98BFF)),
-        ("Bake", "oven.fill", Color(hex: 0xFF9F6E)),
-        ("Decorate", "sparkles", Color(hex: 0xFF5C9E))
+        (loc("Add flour", "Un ekle"), "bag.fill", Color(hex: 0xE8C48F)),
+        (loc("Mix", "Karıştır"), "arrow.triangle.2.circlepath", Color(hex: 0xA98BFF)),
+        (loc("Bake", "Pişir"), "oven.fill", Color(hex: 0xFF9F6E)),
+        (loc("Decorate", "Süsle"), "sparkles", Color(hex: 0xFF5C9E))
     ]
     private var finished: Bool { step >= steps.count }
     private var alreadyRewarded: Bool { store.cookedRecipes.contains(recipe) }
@@ -18,9 +18,9 @@ struct KitchenView: View {
         ScrollView {
             VStack(spacing: 18) {
                 VStack(spacing: 4) {
-                    Text("Kitchen Mini Game").font(.title2.weight(.black)).foregroundStyle(Theme.ink)
+                    Text(loc("Kitchen Mini Game", "Mutfak Mini Oyunu")).font(.title2.weight(.black)).foregroundStyle(Theme.ink)
                         .accessibilityAddTraits(.isHeader)
-                    Text(recipe).font(.subheadline.weight(.bold)).foregroundStyle(Theme.pink)
+                    Text(trName(recipe)).font(.subheadline.weight(.bold)).foregroundStyle(Theme.pink)
                 }
 
                 ZStack {
@@ -41,9 +41,9 @@ struct KitchenView: View {
                 }
                 .animation(store.motionAnimationDuration == 0 ? nil : .spring(duration: 0.4), value: step)
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(finished ? "\(recipe) is ready" : "Next step: \(steps[step].title)")
+                .accessibilityLabel(finished ? loc("\(recipe) is ready", "\(trName(recipe)) hazır") : loc("Next step: \(steps[step].title)", "Sonraki adım: \(steps[step].title)"))
 
-                Text(finished ? "\(recipe) is ready!" : steps[step].title)
+                Text(finished ? loc("\(recipe) is ready!", "\(trName(recipe)) hazır!") : steps[step].title)
                     .font(.title3.weight(.heavy))
                     .foregroundStyle(Theme.ink)
 
@@ -67,7 +67,7 @@ struct KitchenView: View {
                 .dreamCard(cornerRadius: 20)
                 .padding(.horizontal)
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Step \(min(step, steps.count)) of \(steps.count) complete")
+                .accessibilityLabel(loc("Step \(min(step, steps.count)) of \(steps.count) complete", "\(steps.count) adımdan \(min(step, steps.count)) tanesi tamam"))
 
                 Button {
                     if finished {
@@ -83,11 +83,11 @@ struct KitchenView: View {
                         }
                     }
                 } label: {
-                    Label(finished ? "Cook Again" : "Do Step", systemImage: finished ? "arrow.counterclockwise" : "hand.tap.fill")
+                    Label(finished ? loc("Cook Again", "Yeniden Pişir") : loc("Do Step", "Adımı Yap"), systemImage: finished ? "arrow.counterclockwise" : "hand.tap.fill")
                 }
                 .buttonStyle(CandyButtonStyle(color: Theme.pink))
 
-                Label(alreadyRewarded ? "First-bake reward collected: 75 coins + 1 star" : "First completion reward: 75 coins + 1 star",
+                Label(alreadyRewarded ? loc("First-bake reward collected: 75 coins + 1 star", "İlk pişirme ödülü alındı: 75 jeton + 1 yıldız") : loc("First completion reward: 75 coins + 1 star", "İlk tamamlama ödülü: 75 jeton + 1 yıldız"),
                       systemImage: alreadyRewarded ? "checkmark.seal.fill" : "gift.fill")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(Theme.inkSoft)

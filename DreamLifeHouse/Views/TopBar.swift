@@ -24,10 +24,10 @@ struct TopBar: View {
             Spacer(minLength: 4)
             currencyPill(icon: "star.fill", tint: Theme.sun, value: store.stars)
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(store.stars) stars")
+                .accessibilityLabel(loc("\(store.stars) stars", "\(store.stars) yıldız"))
             currencyPill(icon: "circle.hexagongrid.fill", tint: Theme.peach, value: store.coins)
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(store.coins) coins")
+                .accessibilityLabel(loc("\(store.coins) coins", "\(store.coins) jeton"))
                 .accessibilityIdentifier("topbar.coins")
         }
         .padding(.horizontal)

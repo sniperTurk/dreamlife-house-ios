@@ -14,21 +14,21 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Play experience") {
-                    Toggle("Sound", isOn: binding(\.soundEnabled))
-                    Toggle("Haptics", isOn: binding(\.hapticsEnabled))
-                    Toggle("Reduce motion", isOn: binding(\.reducedMotion))
+                Section(loc("Play experience", "Oyun deneyimi")) {
+                    Toggle(loc("Sound", "Ses"), isOn: binding(\.soundEnabled))
+                    Toggle(loc("Haptics", "Titreşim"), isOn: binding(\.hapticsEnabled))
+                    Toggle(loc("Reduce motion", "Hareketi azalt"), isOn: binding(\.reducedMotion))
                 }
-                Section("Family-friendly controls") {
-                    Toggle("Confirm purchases", isOn: binding(\.purchaseConfirmation))
-                    Text("When on, the game asks before spending in-game coins on decorations and outfits. DreamLife House has no real-money purchases, ads or accounts.")
+                Section(loc("Family-friendly controls", "Aile dostu ayarlar")) {
+                    Toggle(loc("Confirm purchases", "Satın almaları onayla"), isOn: binding(\.purchaseConfirmation))
+                    Text(loc("When on, the game asks before spending in-game coins on decorations and outfits. DreamLife House has no real-money purchases, ads or accounts.", "Açıkken oyun, dekorasyon ve kıyafetlere jeton harcamadan önce sorar. DreamLife House\'ta gerçek parayla satın alma, reklam ya da hesap yoktur."))
                         .font(.footnote).foregroundStyle(.secondary)
                 }
                 if store.isSaveReadOnlyDueToAmbiguousRecovery {
-                    Section("Save recovery · for parents") {
-                        Text("Different save copies have the same sequence number. Neither will be deleted or replaced automatically.")
+                    Section(loc("Save recovery · for parents", "Kayıt kurtarma · ebeveynler için")) {
+                        Text(loc("Different save copies have the same sequence number. Neither will be deleted or replaced automatically.", "Farklı kayıt kopyaları aynı sıra numarasına sahip. Hiçbiri otomatik olarak silinmeyecek ya da değiştirilmeyecek."))
                             .font(.footnote)
-                        Text("These are separate saved copies. The app cannot safely tell which conflicting copy is correct.")
+                        Text(loc("These are separate saved copies. The app cannot safely tell which conflicting copy is correct.", "Bunlar ayrı kayıt kopyaları. Uygulama hangisinin doğru olduğunu güvenle bilemez."))
                             .font(.footnote).foregroundStyle(.secondary)
                         if let recoveryInspection {
                             Text(recoveryInspection.summary)
@@ -36,8 +36,8 @@ struct SettingsView: View {
                                 .accessibilityIdentifier("settings.recoverySummary")
                             ForEach(recoveryInspection.previews) { preview in
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text(preview.title).font(.headline)
-                                    Text(preview.summary).font(.footnote)
+                                    Text(trName(preview.title)).font(.headline)
+                                    Text(trName(preview.summary)).font(.footnote)
                                         .foregroundStyle(.secondary)
                                     if let comparison = preview.byteComparisonSummary {
                                         Text(comparison).font(.footnote)
@@ -48,60 +48,60 @@ struct SettingsView: View {
                                 .accessibilityIdentifier("settings.recoveryPreview.\(preview.id)")
                             }
                         } else {
-                            Text("Review unavailable or out of date. Refresh the inspection before exporting.")
+                            Text(loc("Review unavailable or out of date. Refresh the inspection before exporting.", "İnceleme yok ya da güncel değil. Dışa aktarmadan önce incelemeyi yenile."))
                                 .font(.footnote).foregroundStyle(.secondary)
                         }
-                        Text("Exact-byte matches help identify duplicate copies, even if their visible totals are identical. Different bytes do not prove which copy is correct.")
+                        Text(loc("Exact-byte matches help identify duplicate copies, even if their visible totals are identical. Different bytes do not prove which copy is correct.", "Birebir aynı kopyalar, toplamları aynı görünse bile kopyaları ayırt etmeye yardım eder. Farklı olmaları hangisinin doğru olduğunu kanıtlamaz."))
                             .font(.footnote).foregroundStyle(.secondary)
-                        Text("Review only: no copy is selected, restored, or changed.")
+                        Text(loc("Review only: no copy is selected, restored, or changed.", "Yalnızca inceleme: hiçbir kopya seçilmez, geri yüklenmez ya da değiştirilmez."))
                             .font(.footnote).foregroundStyle(.secondary)
                         Button {
                             refreshRecoveryInspection()
                         } label: {
-                            Label("Refresh save inspection", systemImage: "arrow.clockwise")
+                            Label(loc("Refresh save inspection", "Kayıt incelemesini yenile"), systemImage: "arrow.clockwise")
                         }
                         .accessibilityIdentifier("settings.refreshRecoveryInspection")
-                        .accessibilityHint("Read the current copies again before exporting.")
+                        .accessibilityHint(loc("Read the current copies again before exporting.", "Dışa aktarmadan önce güncel kopyaları yeniden oku."))
                         Button {
                             // A child should not be able to open the Files exporter
                             // accidentally with a single tap. Confirm explicitly.
                             showRecoveryExportConfirmation = true
                         } label: {
-                            Label("Export preserved save copies", systemImage: "square.and.arrow.up")
+                            Label(loc("Export preserved save copies", "Korunan kayıt kopyalarını dışa aktar"), systemImage: "square.and.arrow.up")
                         }
                         .disabled(recoveryInspection == nil)
                         .accessibilityIdentifier("settings.exportRecovery")
-                        .accessibilityHint("Ask a parent to save this file somewhere safe.")
-                        Text("The export includes integrity checks to detect accidental damage, but is not encrypted or tamper-proof. Share it only with a trusted adult. Exporting does not restore your game.")
+                        .accessibilityHint(loc("Ask a parent to save this file somewhere safe.", "Bir ebeveynden bu dosyayı güvenli bir yere kaydetmesini iste."))
+                        Text(loc("The export includes integrity checks to detect accidental damage, but is not encrypted or tamper-proof. Share it only with a trusted adult. Exporting does not restore your game.", "Dışa aktarılan dosya kazara bozulmayı fark eden kontroller içerir ama şifreli değildir ve değiştirilmeye karşı korumalı değildir. Yalnızca güvendiğin bir yetişkinle paylaş. Dışa aktarmak oyununu geri yüklemez."))
                             .font(.footnote).foregroundStyle(.secondary)
                     }
                 }
-                Section("About") {
-                    LabeledContent("Version", value: appVersion)
-                    Text("All progress is stored only on this device. Nothing is collected or uploaded.")
+                Section(loc("About", "Hakkında")) {
+                    LabeledContent(loc("Version", "Sürüm"), value: appVersion)
+                    Text(loc("All progress is stored only on this device. Nothing is collected or uploaded.", "Tüm ilerleme yalnızca bu cihazda saklanır. Hiçbir şey toplanmaz ya da yüklenmez."))
                         .font(.footnote).foregroundStyle(.secondary)
                 }
-                Section("Accessibility") {
-                    Label(store.playerSettings.reducedMotion ? "Motion effects minimized" : "Standard motion effects", systemImage: "figure.walk.motion")
-                    Text("Controls use text labels as well as symbols so important actions are not communicated by icons alone.")
+                Section(loc("Accessibility", "Erişilebilirlik")) {
+                    Label(store.playerSettings.reducedMotion ? loc("Motion effects minimized", "Hareket efektleri azaltıldı") : loc("Standard motion effects", "Standart hareket efektleri"), systemImage: "figure.walk.motion")
+                    Text(loc("Controls use text labels as well as symbols so important actions are not communicated by icons alone.", "Önemli işlemler yalnızca simgelerle değil, yazılı etiketlerle de gösterilir."))
                         .font(.footnote).foregroundStyle(.secondary)
                 }
             }
             .scrollContentBackground(.hidden)
             .background(AppBackground())
             .tint(Theme.pink)
-            .navigationTitle("Settings")
+            .navigationTitle(loc("Settings", "Ayarlar"))
             .onAppear { refreshRecoveryInspection() }
             .confirmationDialog(
-                "Export private save data?",
+                loc("Export private save data?", "Özel kayıt verileri dışa aktarılsın mı?"),
                 isPresented: $showRecoveryExportConfirmation,
                 titleVisibility: .visible
             ) {
-                Button("Continue to Files") { confirmRecoveryExport() }
+                Button(loc("Continue to Files", "Dosyalar\'a devam et")) { confirmRecoveryExport() }
                     .accessibilityIdentifier("settings.confirmRecoveryExport")
-                Button("Cancel", role: .cancel) { }
+                Button(loc("Cancel", "Vazgeç"), role: .cancel) { }
             } message: {
-                Text("This archive may contain player names, progress and preferences. It is not encrypted. Save it only in a trusted location. The game does not upload or change saved copies.")
+                Text(loc("This archive may contain player names, progress and preferences. It is not encrypted. Save it only in a trusted location. The game does not upload or change saved copies.", "Bu arşiv oyuncu adlarını, ilerlemeyi ve tercihleri içerebilir. Şifreli değildir. Yalnızca güvenli bir yere kaydet. Oyun kayıt kopyalarını yüklemez ya da değiştirmez."))
             }
             .fileExporter(
                 isPresented: $showRecoveryExporter,
@@ -115,7 +115,7 @@ struct SettingsView: View {
                     showExportError = true
                 }
             }
-            .alert("Unable to export", isPresented: $showExportError) {
+            .alert(loc("Unable to export", "Dışa aktarılamadı"), isPresented: $showExportError) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(exportErrorMessage)
@@ -142,7 +142,7 @@ struct SettingsView: View {
               let data = store.exportAmbiguousRecoveryArchive(inspectionID: inspection.id) else {
             recoveryInspection = nil
             recoveryDocument = nil
-            exportErrorMessage = "Save copies changed after inspection. Refresh and review the copies before exporting."
+            exportErrorMessage = loc("Save copies changed after inspection. Refresh and review the copies before exporting.", "Kayıt kopyaları incelemeden sonra değişti. Dışa aktarmadan önce yenile ve kopyaları gözden geçir.")
             showExportError = true
             return
         }

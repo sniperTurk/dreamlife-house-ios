@@ -4,9 +4,9 @@ struct OnboardingView: View {
     @EnvironmentObject private var store: GameStore
     @State private var page = 0
     private let steps = [
-        ("Welcome home", "house.fill", "Create your character and make every room feel like yours."),
-        ("Play your way", "sparkles", "Cook, decorate, care for a pet, visit the garden and spend time with friends."),
-        ("Safe & comfortable", "heart.fill", "Sound, haptics, reduced motion and purchase confirmation can be changed anytime in Settings.")
+        (loc("Welcome home", "Evine hoş geldin"), "house.fill", loc("Create your character and make every room feel like yours.", "Karakterini yarat ve her odayı kendine göre süsle.")),
+        (loc("Play your way", "Dilediğin gibi oyna"), "sparkles", loc("Cook, decorate, care for a pet, visit the garden and spend time with friends.", "Yemek yap, dekore et, evcil hayvanına bak, bahçeyi gez ve arkadaşlarınla vakit geçir.")),
+        (loc("Safe & comfortable", "Güvenli ve rahat"), "heart.fill", loc("Sound, haptics, reduced motion and purchase confirmation can be changed anytime in Settings.", "Ses, titreşim, azaltılmış hareket ve satın alma onayı Ayarlar'dan istediğin zaman değiştirilebilir."))
     ]
     private let tints = [Theme.pink, Theme.lavender, Theme.mint]
 
@@ -41,12 +41,12 @@ struct OnboardingView: View {
                     }
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Step \(page + 1) of \(steps.count)")
-                Button(page == steps.count - 1 ? "Start playing" : "Continue") {
+                .accessibilityLabel(loc("Step \(page + 1) of \(steps.count)", "Adım \(page + 1) / \(steps.count)"))
+                Button(page == steps.count - 1 ? loc("Start playing", "Oynamaya başla") : loc("Continue", "Devam")) {
                     if page == steps.count - 1 { store.completeOnboarding() } else { page += 1 }
                 }
                 .buttonStyle(CandyButtonStyle(color: tints[page]))
-                .accessibilityHint(page == steps.count - 1 ? "Closes welcome guide" : "Shows the next welcome step")
+                .accessibilityHint(page == steps.count - 1 ? loc("Closes welcome guide", "Karşılama rehberini kapatır") : loc("Shows the next welcome step", "Sonraki adımı gösterir"))
                 .padding(.bottom, 24)
             }
             .padding()

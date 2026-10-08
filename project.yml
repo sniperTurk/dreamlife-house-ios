@@ -26,6 +26,10 @@ targets:
       path: DreamLifeHouse/Info.plist
       properties:
         CFBundleDisplayName: DreamLife House
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations:
+          - en
+          - tr
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         ITSAppUsesNonExemptEncryption: false

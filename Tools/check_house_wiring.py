@@ -133,7 +133,7 @@ extra.update({
     'parent summary derived from captured bytes': 'makeRecoveryInspectionSummary(bytes, previews: previews)' in model_source,
     'export confirmation is explicit': '.confirmationDialog(' in settings_source and 'Export private save data?' in settings_source,
     'export confirmation describes privacy risk': 'may contain player names, progress and preferences' in settings_source,
-    'export confirmation rechecks inspected bytes': 'Button("Continue to Files") { confirmRecoveryExport() }' in settings_source and 'store.exportAmbiguousRecoveryArchive(inspectionID: inspection.id)' in settings_source,
+    'export confirmation rechecks inspected bytes': '"Continue to Files"' in settings_source and '{ confirmRecoveryExport() }' in settings_source and 'store.exportAmbiguousRecoveryArchive(inspectionID: inspection.id)' in settings_source,
     'export confirmation accessible': 'settings.confirmRecoveryExport' in settings_source,
     'confirmation smoke suite': (root/'Tools/ModelSmokeV254.swift').exists(),
     'confirmation UI test source': 'testV254ParentRecoveryOverviewAndPrivateExportConfirmation' in ui_test_source,

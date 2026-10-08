@@ -21,41 +21,41 @@ struct CharacterCreatorView: View {
                 }
                 .padding(.top, 6)
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Your character \(store.characterProfile.name)")
+                .accessibilityLabel(loc("Your character \(store.characterProfile.name)", "Karakterin \(store.characterProfile.name)"))
 
                 HStack(spacing: 10) {
                     Image(systemName: "pencil").foregroundStyle(Theme.pink).font(.headline)
-                    TextField("Character name", text: $name)
+                    TextField(loc("Character name", "Karakter adı"), text: $name)
                         .font(.headline)
                         .foregroundStyle(Theme.ink)
                         .submitLabel(.done)
                         .focused($nameFocused)
                         .onSubmit { saveName() }
                     if nameFocused || name != store.characterProfile.name {
-                        Button("Save") { saveName() }.buttonStyle(PillButtonStyle())
+                        Button(loc("Save", "Kaydet")) { saveName() }.buttonStyle(PillButtonStyle())
                     }
                 }
                 .padding(.horizontal, 14).padding(.vertical, 10)
                 .dreamCard(cornerRadius: 18)
                 .padding(.horizontal)
 
-                optionRow("Hair", options: store.hairStyles, selected: store.characterProfile.hairStyleID) { store.updateCharacter(hairStyleID: $0) } preview: { option in
+                optionRow(loc("Hair", "Saç"), options: store.hairStyles, selected: store.characterProfile.hairStyleID) { store.updateCharacter(hairStyleID: $0) } preview: { option in
                     AvatarView(look: AvatarLook(skinToneID: look.skinToneID, hairStyleID: option.id, hairColorID: look.hairColorID, outfitID: look.outfitID), size: 44)
                         .frame(height: 50)
                 }
-                optionRow("Hair color", options: store.hairColors, selected: store.characterProfile.hairColorID) { store.updateCharacter(hairColorID: $0) } preview: { option in
+                optionRow(loc("Hair color", "Saç rengi"), options: store.hairColors, selected: store.characterProfile.hairColorID) { store.updateCharacter(hairColorID: $0) } preview: { option in
                     Circle().fill(AvatarLook(hairColorID: option.id).hair)
                         .frame(width: 34, height: 34)
                         .overlay(Circle().strokeBorder(Color.white, lineWidth: 3))
                         .frame(height: 50)
                 }
-                optionRow("Skin tone", options: store.skinTones, selected: store.characterProfile.skinToneID) { store.updateCharacter(skinToneID: $0) } preview: { option in
+                optionRow(loc("Skin tone", "Ten rengi"), options: store.skinTones, selected: store.characterProfile.skinToneID) { store.updateCharacter(skinToneID: $0) } preview: { option in
                     Circle().fill(AvatarLook(skinToneID: option.id).skin)
                         .frame(width: 34, height: 34)
                         .overlay(Circle().strokeBorder(Color.white, lineWidth: 3))
                         .frame(height: 50)
                 }
-                optionRow("Accessory", options: store.accessories, selected: store.characterProfile.accessoryID) { store.updateCharacter(accessoryID: $0) } preview: { option in
+                optionRow(loc("Accessory", "Aksesuar"), options: store.accessories, selected: store.characterProfile.accessoryID) { store.updateCharacter(accessoryID: $0) } preview: { option in
                     Image(systemName: option.icon)
                         .font(.title2.weight(.bold))
                         .foregroundStyle(Theme.lavender.gradient)
@@ -89,12 +89,12 @@ struct CharacterCreatorView: View {
                         } label: {
                             VStack(spacing: 4) {
                                 preview(item)
-                                Text(item.name).font(.caption.weight(.heavy)).lineLimit(1).minimumScaleFactor(0.8)
+                                Text(trName(item.name)).font(.caption.weight(.heavy)).lineLimit(1).minimumScaleFactor(0.8)
                             }
                             .frame(width: 88, height: 84)
                         }
                         .buttonStyle(TileButtonStyle(selected: selected == item.id))
-                        .accessibilityLabel("\(title): \(item.name)")
+                        .accessibilityLabel("\(title): \(trName(item.name))")
                         .accessibilityAddTraits(selected == item.id ? .isSelected : [])
                     }
                 }

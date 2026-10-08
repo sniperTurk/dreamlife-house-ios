@@ -254,7 +254,7 @@ struct NeedMeter: View {
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(name) \(value) percent")
+        .accessibilityLabel(loc("\(name) \(value) percent", "\(name) yüzde \(value)"))
     }
 }
 

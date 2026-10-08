@@ -26,26 +26,26 @@ final class ScreenshotTests: XCTestCase {
 
     func testCaptureAppStoreScreenshots() {
         let app = XCUIApplication()
-        app.launchArguments = ["--dreamlife-ui-test-showcase"]
+        app.launchArguments = ["--dreamlife-ui-test-showcase", "-AppleLanguages", "(tr)", "-AppleLocale", "tr_TR"]
         app.launch()
         XCTAssertTrue(app.descendants(matching: .any)["topbar.coins"].firstMatch.waitForExistence(timeout: 20))
         snap(app, "01-house")
 
-        tab(app, "Me")
+        tab(app, "Ben")
         snap(app, "02-me")
-        if app.buttons["Wardrobe"].waitForExistence(timeout: 3) { app.buttons["Wardrobe"].tap() }
+        if app.buttons["Gardırop"].waitForExistence(timeout: 3) { app.buttons["Gardırop"].tap() }
         snap(app, "03-wardrobe")
 
-        tab(app, "Play")
-        let step = app.buttons["Do Step"]
+        tab(app, "Oyna")
+        let step = app.buttons["Adımı Yap"]
         for _ in 0..<4 where step.waitForExistence(timeout: 3) { step.tap() }
         snap(app, "04-kitchen")
-        if app.buttons["Pet"].waitForExistence(timeout: 3) { app.buttons["Pet"].tap() }
+        if app.buttons["Evcil Hayvan"].waitForExistence(timeout: 3) { app.buttons["Evcil Hayvan"].tap() }
         snap(app, "05-pet")
-        if app.buttons["Friends"].waitForExistence(timeout: 3) { app.buttons["Friends"].tap() }
+        if app.buttons["Arkadaşlar"].waitForExistence(timeout: 3) { app.buttons["Arkadaşlar"].tap() }
         snap(app, "06-friends")
 
-        tab(app, "Adventures")
+        tab(app, "Maceralar")
         snap(app, "07-adventures")
     }
 }
