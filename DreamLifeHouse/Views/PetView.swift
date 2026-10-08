@@ -37,7 +37,7 @@ struct PetView: View {
                 .padding(.horizontal)
 
                 HStack(spacing: 10) {
-                    careButton("Feed", icon: "fork.knife", tint: Theme.mint, action: "feed", text: loc("Yum! \(store.petProfile.name) is full.", "Nefis! \(store.petProfile.name) doydu."))
+                    careButton(loc("Feed", "Besle"), icon: "fork.knife", tint: Theme.mint, action: "feed", text: loc("Yum! \(store.petProfile.name) is full.", "Nefis! \(store.petProfile.name) doydu."))
                     careButton(loc("Play", "Oyna"), icon: "tennisball.fill", tint: Theme.pink, action: "play", text: loc("\(store.petProfile.name) loves playing with you!", "\(store.petProfile.name) seninle oynamayı çok seviyor!"))
                     careButton(loc("Rest", "Dinlen"), icon: "moon.zzz.fill", tint: Theme.lavender, action: "rest", text: loc("\(store.petProfile.name) had a cozy nap.", "\(store.petProfile.name) güzel bir şekerleme yaptı."))
                 }

@@ -93,7 +93,7 @@ struct TasksView: View {
                     Text(loc("Day \(store.dailyLifeProgress.day) • \(store.dayPhase)", "\(store.dailyLifeProgress.day). Gün • \(trName(store.dayPhase))"))
                         .font(.headline.weight(.heavy))
                         .foregroundStyle(Theme.ink)
-                    Text(complete ? loc("Daily chain complete!", "Günlük zincir tamamlandı!") : store.dailyChainDetail)
+                    Text(complete ? loc("Daily chain complete!", "Günlük zincir tamamlandı!") : trName(store.dailyChainDetail))
                         .font(.caption)
                         .foregroundStyle(Theme.inkSoft)
                 }
