@@ -100,7 +100,7 @@ jobs:
           grep -E "error:|\*\* BUILD" build/build.log | tail -80
           exit $STATUS
 
-      - name: Archive (signed via App Store Connect API key)
+      - name: Archive (unsigned; signed during export)
         if: steps.key.outputs.ready == 'true'
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
@@ -114,10 +114,7 @@ jobs:
           xcodebuild archive -project "$PROJECT" -scheme "$SCHEME" -configuration Release \
             -destination 'generic/platform=iOS' -archivePath build/DreamLifeHouse.xcarchive \
             CURRENT_PROJECT_VERSION=$BUILD_NUMBER \
-            CODE_SIGN_STYLE=Automatic DEVELOPMENT_TEAM=5WM9HB4Y66 \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8" \
-            -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$(printf %s "$ASC_ISSUER_ID" | tr -d "[:space:]")" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
             > build/archive.log 2>&1
           STATUS=$?
           grep -E "error:|\*\* ARCHIVE" build/archive.log | tail -80
