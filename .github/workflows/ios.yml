@@ -40,7 +40,6 @@ jobs:
         run: python3 Tools/check_house_wiring.py
 
       - name: Unit tests (simulator)
-        continue-on-error: true
         run: |
           SIM_ID=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k,v in sorted(d.items(), reverse=True) if 'iOS' in k for x in v if x['name'].startswith('iPhone')))")
           mkdir -p build
