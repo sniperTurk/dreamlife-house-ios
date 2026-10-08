@@ -59,8 +59,10 @@ jobs:
           ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
         run: |
           if [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ] && [ -n "$ASC_KEY_P8" ]; then
+            # Accept "AuthKey_XXXXXXXXXX.p8" or the bare 10-character Key ID.
+            KEY_ID=$(printf %s "$ASC_KEY_ID" | sed -e "s/AuthKey_//" -e "s/\.p8//" | tr -d "[:space:]")
             mkdir -p "$RUNNER_TEMP/keys"
-            printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8"
+            printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8"
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
@@ -76,8 +78,8 @@ jobs:
           python3 -m pip install --quiet --break-system-packages pyjwt cryptography 2>/dev/null || python3 -m pip install --quiet pyjwt cryptography
           python3 - <<'PY'
           import os, time, jwt, urllib.request, urllib.error, json
-          kid=os.environ["ASC_KEY_ID"].strip(); iss=os.environ["ASC_ISSUER_ID"].strip()
-          key=open(f"{os.environ['RUNNER_TEMP']}/keys/AuthKey_{os.environ['ASC_KEY_ID']}.p8").read()
+          kid=os.environ["ASC_KEY_ID"].replace("AuthKey_","").replace(".p8","").strip(); iss=os.environ["ASC_ISSUER_ID"].strip()
+          key=open(f"{os.environ['RUNNER_TEMP']}/keys/AuthKey_{kid}.p8").read()
           print("key id length:", len(kid), "| issuer length:", len(iss), "| p8 has BEGIN/END:", "BEGIN PRIVATE KEY" in key, "END PRIVATE KEY" in key)
           tok=jwt.encode({"iss":iss,"iat":int(time.time()),"exp":int(time.time())+600,"aud":"appstoreconnect-v1"}, key, algorithm="ES256", headers={"kid":kid})
           req=urllib.request.Request("https://api.appstoreconnect.apple.com/v1/apps?filter[bundleId]=com.birolseker.dreamlifehouse", headers={"Authorization":"Bearer "+tok})
@@ -105,6 +107,7 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           mkdir -p build
+          KEY_ID=$(printf %s "$ASC_KEY_ID" | sed -e "s/AuthKey_//" -e "s/\.p8//" | tr -d "[:space:]")
           BUILD_NUMBER=$((100 + GITHUB_RUN_NUMBER))
           echo "Build number: $BUILD_NUMBER"
           set +e
@@ -113,8 +116,8 @@ jobs:
             CURRENT_PROJECT_VERSION=$BUILD_NUMBER \
             CODE_SIGN_STYLE=Automatic CODE_SIGN_IDENTITY="Apple Distribution" DEVELOPMENT_TEAM=5WM9HB4Y66 \
             -allowProvisioningUpdates \
-            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" \
-            -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8" \
+            -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$(printf %s "$ASC_ISSUER_ID" | tr -d "[:space:]")" \
             > build/archive.log 2>&1
           STATUS=$?
           grep -E "error:|\*\* ARCHIVE" build/archive.log | tail -80
@@ -126,11 +129,12 @@ jobs:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
+          KEY_ID=$(printf %s "$ASC_KEY_ID" | sed -e "s/AuthKey_//" -e "s/\.p8//" | tr -d "[:space:]")
           xcodebuild -exportArchive -archivePath build/DreamLifeHouse.xcarchive \
             -exportOptionsPlist ci/ExportOptions.plist -exportPath build/export \
             -allowProvisioningUpdates \
-            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" \
-            -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8" \
+            -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$(printf %s "$ASC_ISSUER_ID" | tr -d "[:space:]")"
 
       - name: Keep logs
         if: always()
