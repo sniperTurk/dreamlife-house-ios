@@ -49,6 +49,10 @@ jobs:
             CODE_SIGNING_ALLOWED=NO > build/test.log 2>&1
           STATUS=$?
           grep -E "error:|failed|Executed|\*\* TEST" build/test.log | tail -80
+          # Surface failures as annotations (readable without downloading logs).
+          grep -E "error:|XCTAssert|Test Case .* failed" build/test.log | sort -u | head -25 | while IFS= read -r line; do
+            echo "::error::${line//%/%25}"
+          done
           exit $STATUS
 
       - name: Check App Store Connect key
