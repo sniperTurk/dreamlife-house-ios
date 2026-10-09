@@ -356,6 +356,7 @@ struct FurnitureArt: View {
             case "custom.mirror": mirror
             case "custom.towel": towel
             case "custom.duck": duck
+            case "custom.birdhouse": birdhouse
             default:
                 Image(systemName: item.icon)
                     .font(.system(size: size))
@@ -416,6 +417,19 @@ struct FurnitureArt: View {
                 .padding(.bottom, size * 0.12)
             }
             .frame(width: size * 0.8, height: size * 0.9)
+        }
+    }
+
+    private var birdhouse: some View {
+        let wood = Color(hex: 0xC48A5A)
+        return VStack(spacing: 0) {
+            TriangleShape().fill(Theme.pink.gradient).frame(width: size * 1.1, height: size * 0.45)
+            ZStack {
+                RoundedRectangle(cornerRadius: size * 0.08).fill(wood.gradient)
+                Circle().fill(Theme.ink.opacity(0.8)).frame(width: size * 0.3, height: size * 0.3)
+            }
+            .frame(width: size * 0.85, height: size * 0.7)
+            Rectangle().fill(wood.opacity(0.85)).frame(width: size * 0.12, height: size * 0.6)
         }
     }
 

@@ -318,7 +318,7 @@ struct SaveRecoveryInspection: Equatable {
         FurnitureItem(id:"bathroom.towel", roomID:"bathroom", name:"Towel", nameTR:"Havlu", icon:"custom.towel", cost:15),
         FurnitureItem(id:"bathroom.duck", roomID:"bathroom", name:"Rubber duck", nameTR:"Lastik ördek", icon:"custom.duck", cost:15),
         FurnitureItem(id:"garden.tent", roomID:"garden", name:"Tent", nameTR:"Çadır", icon:"tent.fill", cost:50),
-        FurnitureItem(id:"garden.birdhouse", roomID:"garden", name:"Birdhouse", nameTR:"Kuş evi", icon:"birdhouse.fill", cost:30),
+        FurnitureItem(id:"garden.birdhouse", roomID:"garden", name:"Birdhouse", nameTR:"Kuş evi", icon:"custom.birdhouse", cost:30),
         FurnitureItem(id:"garden.ball", roomID:"garden", name:"Ball", nameTR:"Top", icon:"soccerball", cost:15),
         FurnitureItem(id:"garden.umbrella", roomID:"garden", name:"Umbrella", nameTR:"Şemsiye", icon:"beach.umbrella.fill", cost:35),
         FurnitureItem(id:"garden.bicycle", roomID:"garden", name:"Bicycle", nameTR:"Bisiklet", icon:"bicycle", cost:45),
