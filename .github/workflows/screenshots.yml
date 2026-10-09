@@ -30,6 +30,7 @@ jobs:
         run: brew install xcodegen && xcodegen generate
 
       - name: Capture on iPhone (6.9") and iPad (13")
+        id: capture
         run: |
           set -e
           pick() { xcrun simctl list devices available -j | python3 -c "
@@ -51,7 +52,10 @@ jobs:
             xcrun simctl status_bar "$udid" override --time "9:41" --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4 || true
             xcodebuild test -project DreamLifeHouse.xcodeproj -scheme DreamLifeHouse \
               -destination "id=$udid" -only-testing:DreamLifeHouseUITests/ScreenshotTests \
-              -resultBundlePath "build/$kind.xcresult" CODE_SIGNING_ALLOWED=NO > "build-$kind.log" 2>&1 || { tail -40 "build-$kind.log"; exit 1; }
+              -resultBundlePath "build/$kind.xcresult" CODE_SIGNING_ALLOWED=NO > "build-$kind.log" 2>&1 || {
+                FAILED=1; tail -40 "build-$kind.log"
+                grep -E "error:|failed|XCTAssert" "build-$kind.log" | sort -u | head -15 | while IFS= read -r line; do echo "::error::$kind: ${line//%/%25}"; done
+              }
             xcrun xcresulttool export attachments --path "build/$kind.xcresult" --output-path "raw-$kind"
             python3 - "$kind" <<'PY'
           import json, os, shutil, sys
@@ -67,8 +71,12 @@ jobs:
             xcrun simctl shutdown "$udid" || true
           done
           sips -g pixelWidth -g pixelHeight shots/*/*.png | head -20
+          # Partial screenshots are still published for review, but a failed run
+          # never uploads to App Store Connect (that step requires success).
+          if [ "${FAILED:-0}" = 1 ]; then echo "failed=1" >> "$GITHUB_OUTPUT"; fi
 
       - name: Upload screenshots to App Store Connect
+        if: steps.capture.outputs.failed != '1'
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
