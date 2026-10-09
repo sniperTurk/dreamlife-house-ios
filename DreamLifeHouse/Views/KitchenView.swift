@@ -94,6 +94,7 @@ struct KitchenView: View {
             }
             .padding(.top, 8)
             .padding(.bottom, 28)
+            .readableWidth()
         }
     }
 }

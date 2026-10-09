@@ -49,33 +49,15 @@ struct HouseView: View {
   }
  }
 
+ @Environment(\.horizontalSizeClass) private var hSize
+ @Environment(\.verticalSizeClass) private var vSize
+ /// Phone in landscape, or iPad: room on the left, controls on the right.
+ private var wide: Bool { vSize == .compact || hSize == .regular }
+
  var body: some View {
   NavigationStack {
-   ScrollView(.vertical) {
-    VStack(spacing: 14) {
-     TopBar()
-     roomPicker
-     needsPanel
-     RoomStage(roomID: roomID, activeSlot: $activeSlot, message: $message, onDrop: { contextMessage($0) })
-      .padding(.horizontal)
-     actionRow
-     Text(message)
-      .font(.subheadline.weight(.semibold))
-      .foregroundStyle(Theme.ink)
-      .multilineTextAlignment(.center)
-      .padding(.horizontal, 16).padding(.vertical, 10)
-      .frame(maxWidth: .infinity)
-      .background(Capsule().fill(Color.white.opacity(0.85)))
-      .padding(.horizontal)
-      .accessibilityIdentifier("house.actionFeedback")
-      .accessibilityAddTraits(.updatesFrequently)
-     radiantDecorationControls
-     if roomID == "garden" { gardenActions }
-     if roomID == "living" { LivingRoomCollection(message: $message) }
-     decorShop
-     HouseGoals(message: $message)
-    }
-    .padding(.bottom, 28)
+   Group {
+    if wide { wideLayout } else { tallLayout }
    }
    .background(AppBackground())
    .toolbar(.hidden, for: .navigationBar)
@@ -88,6 +70,74 @@ struct HouseView: View {
     Text(loc("\(item.name) costs \(item.cost) coins. You have \(store.coins) coins.", "\(trName(item.name)) \(item.cost) jeton. Sende \(store.coins) jeton var."))
    }
   }
+ }
+
+ // MARK: Layouts
+
+ private var tallLayout: some View {
+  ScrollView(.vertical) {
+   VStack(spacing: 14) {
+    TopBar()
+    roomPicker
+    needsPanel
+    RoomStage(roomID: roomID, activeSlot: $activeSlot, message: $message, onDrop: { contextMessage($0) })
+     .padding(.horizontal)
+    actionRow
+    feedback
+    radiantDecorationControls
+    if roomID == "garden" { gardenActions }
+    if roomID == "living" { LivingRoomCollection(message: $message) }
+    decorShop
+    HouseGoals(message: $message)
+   }
+   .padding(.bottom, 28)
+  }
+ }
+
+ private var wideLayout: some View {
+  VStack(spacing: 6) {
+   TopBar()
+   GeometryReader { geo in
+    HStack(alignment: .top, spacing: 4) {
+     VStack(spacing: 8) {
+      RoomStage(roomID: roomID, activeSlot: $activeSlot, message: $message, onDrop: { contextMessage($0) }, stageHeight: nil)
+       .frame(minHeight: 200)
+       .padding(.leading)
+      actionRow
+     }
+     .frame(maxWidth: .infinity, maxHeight: .infinity)
+     .padding(.bottom, 8)
+     ScrollView(.vertical) {
+      VStack(spacing: 14) {
+       roomPicker
+       needsPanel
+       feedback
+       radiantDecorationControls
+       if roomID == "garden" { gardenActions }
+       if roomID == "living" { LivingRoomCollection(message: $message) }
+       decorShop
+       HouseGoals(message: $message)
+      }
+      .padding(.vertical, 6)
+      .padding(.bottom, 24)
+     }
+     .frame(width: min(480, geo.size.width * 0.46))
+    }
+   }
+  }
+ }
+
+ private var feedback: some View {
+  Text(message)
+   .font(.subheadline.weight(.semibold))
+   .foregroundStyle(Theme.ink)
+   .multilineTextAlignment(.center)
+   .padding(.horizontal, 16).padding(.vertical, 10)
+   .frame(maxWidth: .infinity)
+   .background(Capsule().fill(Color.white.opacity(0.85)))
+   .padding(.horizontal)
+   .accessibilityIdentifier("house.actionFeedback")
+   .accessibilityAddTraits(.updatesFrequently)
  }
 
  // MARK: Room picker & needs
@@ -247,6 +297,7 @@ private struct RoomStage: View {
  @Binding var activeSlot: String
  @Binding var message: String
  let onDrop: (String) -> String
+ var stageHeight: CGFloat? = 320
  @GestureState private var dragOffset: CGSize = .zero
 
  private var layout: RoomLayout { RoomLayout.forRoom(roomID) }
@@ -283,7 +334,7 @@ private struct RoomStage: View {
     player(w: w, h: h)
    }
   }
-  .frame(height: 320)
+  .frame(height: stageHeight)
   .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
   .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(Color.white, lineWidth: 4))
   .shadow(color: Theme.roomTint(roomID).opacity(0.25), radius: 14, y: 8)

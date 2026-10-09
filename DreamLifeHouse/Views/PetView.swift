@@ -6,9 +6,34 @@ struct PetView: View {
     @State private var reaction = 0
     @State private var message = loc("Take good care of your pet!", "Evcil hayvanına iyi bak!")
 
+    @Environment(\.horizontalSizeClass) private var hSize
+    @Environment(\.verticalSizeClass) private var vSize
+    private var wide: Bool { vSize == .compact || hSize == .regular }
+
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
+        Group {
+            if wide {
+                HStack(alignment: .top, spacing: 0) {
+                    ScrollView { VStack(spacing: 16) { heroSection }.padding(.vertical, 12) }
+                        .frame(maxWidth: .infinity)
+                    ScrollView { VStack(spacing: 16) { controlsSection }.padding(.vertical, 12) }
+                        .frame(maxWidth: .infinity)
+                }
+            } else {
+                ScrollView {
+                    VStack(spacing: 16) {
+                        heroSection
+                        controlsSection
+                    }
+                    .padding(.top, 6)
+                    .padding(.bottom, 28)
+                }
+            }
+        }
+        .scrollDismissesKeyboard(.interactively)
+    }
+
+    @ViewBuilder private var heroSection: some View {
                 ZStack {
                     Circle()
                         .fill(RadialGradient(colors: [Color.white, Theme.peachSoft], center: .center, startRadius: 10, endRadius: 120))
@@ -42,7 +67,9 @@ struct PetView: View {
                     careButton(loc("Rest", "Dinlen"), icon: "moon.zzz.fill", tint: Theme.lavender, action: "rest", text: loc("\(store.petProfile.name) had a cozy nap.", "\(store.petProfile.name) güzel bir şekerleme yaptı."))
                 }
                 .padding(.horizontal)
+    }
 
+    @ViewBuilder private var controlsSection: some View {
                 VStack(alignment: .leading, spacing: 12) {
                     SectionTitle(title: loc("Pet profile", "Evcil hayvan profili"), icon: "pawprint.fill")
                     Picker(loc("Pet", "Evcil hayvan"), selection: Binding(get: { store.petProfile.species }, set: { store.updatePet(species: $0) })) {
@@ -87,11 +114,6 @@ struct PetView: View {
                 .padding(14)
                 .dreamCard()
                 .padding(.horizontal)
-            }
-            .padding(.top, 6)
-            .padding(.bottom, 28)
-        }
-        .scrollDismissesKeyboard(.interactively)
     }
 
     private func careButton(_ title: String, icon: String, tint: Color, action: String, text: String) -> some View {

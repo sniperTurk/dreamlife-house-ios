@@ -325,3 +325,12 @@ func compactNumber(_ value: Int) -> String {
         #endif
     }
 }
+
+
+extension View {
+    /// Keeps long single-column screens comfortable in landscape and on iPad by
+    /// centring the content at a readable width.
+    func readableWidth(_ maxWidth: CGFloat = 720) -> some View {
+        frame(maxWidth: maxWidth).frame(maxWidth: .infinity)
+    }
+}

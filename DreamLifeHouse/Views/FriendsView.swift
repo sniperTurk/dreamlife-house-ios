@@ -37,6 +37,7 @@ struct FriendsView: View {
             .padding(.horizontal)
             .padding(.top, 6)
             .padding(.bottom, 28)
+            .readableWidth()
         }
     }
 }

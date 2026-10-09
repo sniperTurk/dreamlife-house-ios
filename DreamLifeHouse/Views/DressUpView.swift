@@ -8,9 +8,40 @@ struct DressUpView: View {
 
     private var look: AvatarLook { AvatarLook(profile: store.characterProfile, outfitID: store.selectedOutfitID) }
 
+    @Environment(\.horizontalSizeClass) private var hSize
+    @Environment(\.verticalSizeClass) private var vSize
+    private var wide: Bool { vSize == .compact || hSize == .regular }
+
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
+        Group {
+            if wide {
+                HStack(alignment: .top, spacing: 0) {
+                    ScrollView { VStack(spacing: 16) { mirrorSection }.padding(.vertical, 12) }
+                        .frame(maxWidth: .infinity)
+                    ScrollView { VStack(spacing: 16) { wardrobeSection(columns: 3) }.padding(.vertical, 12) }
+                        .frame(maxWidth: .infinity)
+                }
+            } else {
+                ScrollView {
+                    VStack(spacing: 16) {
+                        mirrorSection
+                        wardrobeSection(columns: 2)
+                    }
+                    .padding(.bottom, 28)
+                }
+            }
+        }
+        .confirmationDialog(pendingOutfit.map { loc("Buy the \($0.name) look?", "\(trName($0.name)) görünümü alınsın mı?") } ?? loc("Buy outfit?", "Kıyafet alınsın mı?"),
+                            isPresented: Binding(get: { pendingOutfit != nil }, set: { if !$0 { pendingOutfit = nil } }),
+                            titleVisibility: .visible, presenting: pendingOutfit) { outfit in
+            Button(loc("Buy for \(outfit.cost) coins", "\(outfit.cost) jetona al")) { wear(outfit) }
+            Button(loc("Not now", "Şimdi değil"), role: .cancel) { }
+        } message: { outfit in
+            Text(loc("\(outfit.name) costs \(outfit.cost) coins. You have \(store.coins) coins.", "\(trName(outfit.name)) \(outfit.cost) jeton. Sende \(store.coins) jeton var."))
+        }
+    }
+
+    @ViewBuilder private var mirrorSection: some View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 30, style: .continuous)
                         .fill(LinearGradient(colors: [Theme.lavenderSoft, Theme.pinkSoft], startPoint: .top, endPoint: .bottom))
@@ -65,9 +96,11 @@ struct DressUpView: View {
                     }
                     .padding(.horizontal)
                 }
+    }
 
+    @ViewBuilder private func wardrobeSection(columns: Int) -> some View {
                 SectionTitle(title: loc("Outfits", "Kıyafetler"), icon: "tshirt.fill").padding(.horizontal)
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: columns), spacing: 12) {
                     ForEach(store.outfits) { outfit in
                         let owned = store.ownsOutfit(outfit)
                         let selected = store.selectedOutfitID == outfit.id
@@ -97,17 +130,6 @@ struct DressUpView: View {
                     }
                 }
                 .padding(.horizontal)
-            }
-            .padding(.bottom, 28)
-        }
-        .confirmationDialog(pendingOutfit.map { loc("Buy the \($0.name) look?", "\(trName($0.name)) görünümü alınsın mı?") } ?? loc("Buy outfit?", "Kıyafet alınsın mı?"),
-                            isPresented: Binding(get: { pendingOutfit != nil }, set: { if !$0 { pendingOutfit = nil } }),
-                            titleVisibility: .visible, presenting: pendingOutfit) { outfit in
-            Button(loc("Buy for \(outfit.cost) coins", "\(outfit.cost) jetona al")) { wear(outfit) }
-            Button(loc("Not now", "Şimdi değil"), role: .cancel) { }
-        } message: { outfit in
-            Text(loc("\(outfit.name) costs \(outfit.cost) coins. You have \(store.coins) coins.", "\(trName(outfit.name)) \(outfit.cost) jeton. Sende \(store.coins) jeton var."))
-        }
     }
 
     private var avatarDescription: String {

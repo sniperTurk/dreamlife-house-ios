@@ -63,6 +63,7 @@ struct CharacterCreatorView: View {
                 }
             }
             .padding(.bottom, 28)
+            .readableWidth()
         }
         .scrollDismissesKeyboard(.interactively)
         .onAppear { name = store.characterProfile.name }
