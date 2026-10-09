@@ -13,6 +13,10 @@ protocol ObservableObject: AnyObject {}
 #endif
 
 struct RoomItem: Identifiable, Equatable { let id: String; let name: String; let icon: String; let cost: Int }
+/// Room-specific furniture. Unlike the two decor slots, a room can show every
+/// piece it owns at once. Names are stored in both languages because the
+/// character reads each new piece aloud in Turkish and English.
+struct FurnitureItem: Identifiable, Equatable { let id: String; let roomID: String; let name: String; let nameTR: String; let icon: String; let cost: Int }
 struct Outfit: Identifiable, Equatable { let id: String; let name: String; let icon: String; let cost: Int }
 struct HouseRoom: Identifiable, Equatable { let id: String; let name: String; let icon: String; let accentIcon: String }
 struct CharacterOption: Identifiable, Equatable { let id: String; let name: String; let icon: String }
@@ -77,6 +81,8 @@ private struct SaveGame: Codable {
     var playerSettings: PlayerSettings?
     var claimedFriendQuestIDs: Set<String>?
     var displayedKeepsakeIDsByRoom: [String:Set<String>]?
+    var ownedFurnitureIDs: Set<String>?
+    var placedFurnitureIDs: Set<String>?
 }
 
 // A lossless, local-only package for parents to preserve conflicting save
@@ -230,6 +236,8 @@ struct SaveRecoveryInspection: Equatable {
     @Published private(set) var claimedFriendQuestIDs: Set<String> = []
     #endif
     @Published private(set) var displayedKeepsakeIDsByRoom: [String:Set<String>] = [:]
+    @Published private(set) var ownedFurnitureIDs: Set<String> = []
+    @Published private(set) var placedFurnitureIDs: Set<String> = []
     // A future-version or unrecognized-schema save must never be overwritten.
     // Gameplay remains available as a non-persistent preview, with a visible warning.
     @Published private(set) var isSaveReadOnlyDueToNewerVersion = false
@@ -281,6 +289,42 @@ struct SaveRecoveryInspection: Equatable {
     ]
     let outfits = [Outfit(id:"sunny",name:"Sunny",icon:"sun.max.fill",cost:0),Outfit(id:"party",name:"Party",icon:"sparkles",cost:80),Outfit(id:"sport",name:"Sport",icon:"figure.run",cost:100),Outfit(id:"creative",name:"Creative",icon:"paintpalette.fill",cost:120)]
 
+    // Icons that start with "custom." are drawn by FurnitureArt instead of SF Symbols.
+    let furniture = [
+        FurnitureItem(id:"kitchen.table", roomID:"kitchen", name:"Kitchen table", nameTR:"Mutfak masası", icon:"table.furniture.fill", cost:40),
+        FurnitureItem(id:"kitchen.cabinet", roomID:"kitchen", name:"Kitchen cabinet", nameTR:"Mutfak dolabı", icon:"cabinet.fill", cost:40),
+        FurnitureItem(id:"kitchen.oven", roomID:"kitchen", name:"Oven", nameTR:"Fırın", icon:"oven.fill", cost:50),
+        FurnitureItem(id:"kitchen.fridge", roomID:"kitchen", name:"Refrigerator", nameTR:"Buzdolabı", icon:"refrigerator.fill", cost:60),
+        FurnitureItem(id:"kitchen.plate", roomID:"kitchen", name:"Plate", nameTR:"Tabak", icon:"custom.plate", cost:15),
+        FurnitureItem(id:"kitchen.pot", roomID:"kitchen", name:"Pot", nameTR:"Tencere", icon:"custom.pot", cost:20),
+        FurnitureItem(id:"kitchen.pan", roomID:"kitchen", name:"Frying pan", nameTR:"Tava", icon:"frying.pan.fill", cost:20),
+        FurnitureItem(id:"kitchen.sink", roomID:"kitchen", name:"Sink", nameTR:"Evye", icon:"sink.fill", cost:35),
+        FurnitureItem(id:"living.tv", roomID:"living", name:"Television", nameTR:"Televizyon", icon:"tv.fill", cost:50),
+        FurnitureItem(id:"living.armchair", roomID:"living", name:"Armchair", nameTR:"Koltuk", icon:"chair.lounge.fill", cost:40),
+        FurnitureItem(id:"living.bookshelf", roomID:"living", name:"Bookshelf", nameTR:"Kitaplık", icon:"books.vertical.fill", cost:35),
+        FurnitureItem(id:"living.fireplace", roomID:"living", name:"Fireplace", nameTR:"Şömine", icon:"fireplace.fill", cost:60),
+        FurnitureItem(id:"living.lamp", roomID:"living", name:"Floor lamp", nameTR:"Lambader", icon:"lamp.floor.fill", cost:30),
+        FurnitureItem(id:"living.clock", roomID:"living", name:"Clock", nameTR:"Saat", icon:"clock.fill", cost:20),
+        FurnitureItem(id:"bedroom.wardrobe", roomID:"bedroom", name:"Wardrobe", nameTR:"Dolap", icon:"cabinet.fill", cost:50),
+        FurnitureItem(id:"bedroom.desk", roomID:"bedroom", name:"Desk lamp", nameTR:"Masa lambası", icon:"lamp.desk.fill", cost:25),
+        FurnitureItem(id:"bedroom.teddy", roomID:"bedroom", name:"Teddy bear", nameTR:"Oyuncak ayı", icon:"teddybear.fill", cost:30),
+        FurnitureItem(id:"bedroom.globe", roomID:"bedroom", name:"Globe", nameTR:"Dünya küresi", icon:"globe.desk.fill", cost:35),
+        FurnitureItem(id:"bedroom.chair", roomID:"bedroom", name:"Chair", nameTR:"Sandalye", icon:"chair.fill", cost:25),
+        FurnitureItem(id:"bedroom.pillow", roomID:"bedroom", name:"Pillow", nameTR:"Yastık", icon:"custom.pillow", cost:15),
+        FurnitureItem(id:"bathroom.toilet", roomID:"bathroom", name:"Toilet", nameTR:"Klozet", icon:"toilet.fill", cost:40),
+        FurnitureItem(id:"bathroom.sink", roomID:"bathroom", name:"Washbasin", nameTR:"Lavabo", icon:"sink.fill", cost:35),
+        FurnitureItem(id:"bathroom.washer", roomID:"bathroom", name:"Washing machine", nameTR:"Çamaşır makinesi", icon:"washer.fill", cost:50),
+        FurnitureItem(id:"bathroom.mirror", roomID:"bathroom", name:"Mirror", nameTR:"Ayna", icon:"custom.mirror", cost:25),
+        FurnitureItem(id:"bathroom.towel", roomID:"bathroom", name:"Towel", nameTR:"Havlu", icon:"custom.towel", cost:15),
+        FurnitureItem(id:"bathroom.duck", roomID:"bathroom", name:"Rubber duck", nameTR:"Lastik ördek", icon:"custom.duck", cost:15),
+        FurnitureItem(id:"garden.tent", roomID:"garden", name:"Tent", nameTR:"Çadır", icon:"tent.fill", cost:50),
+        FurnitureItem(id:"garden.birdhouse", roomID:"garden", name:"Birdhouse", nameTR:"Kuş evi", icon:"birdhouse.fill", cost:30),
+        FurnitureItem(id:"garden.ball", roomID:"garden", name:"Ball", nameTR:"Top", icon:"soccerball", cost:15),
+        FurnitureItem(id:"garden.umbrella", roomID:"garden", name:"Umbrella", nameTR:"Şemsiye", icon:"beach.umbrella.fill", cost:35),
+        FurnitureItem(id:"garden.bicycle", roomID:"garden", name:"Bicycle", nameTR:"Bisiklet", icon:"bicycle", cost:45),
+        FurnitureItem(id:"garden.carrot", roomID:"garden", name:"Carrot", nameTR:"Havuç", icon:"carrot.fill", cost:15)
+    ]
+
     init(defaults: UserDefaults = .standard, saveKey: String = "dreamlife.save.v2") { self.defaults=defaults; self.saveKey=saveKey; load() }
     var selectedOutfitIcon:String { outfits.first{$0.id==selectedOutfitID}?.icon ?? "sun.max.fill" }
     func selectedItem(in roomID:String)->RoomItem { selectedItem(in: roomID, slot: "main") }
@@ -300,6 +344,28 @@ struct SaveRecoveryInspection: Equatable {
         save()
         return true
     }
+    // MARK: Room furniture
+    func furniture(in roomID:String)->[FurnitureItem] { furniture.filter { $0.roomID == roomID } }
+    func placedFurniture(in roomID:String)->[FurnitureItem] { furniture.filter { $0.roomID == roomID && placedFurnitureIDs.contains($0.id) } }
+    func ownsFurniture(_ item:FurnitureItem)->Bool { ownedFurnitureIDs.contains(item.id) }
+    func isFurniturePlaced(_ item:FurnitureItem)->Bool { placedFurnitureIDs.contains(item.id) }
+    /// Buys the piece if needed and puts it in its room. Returns false when the
+    /// item is not in the catalog or there are not enough coins.
+    @discardableResult func placeFurniture(_ item:FurnitureItem)->Bool {
+        guard let catalogItem = furniture.first(where: { $0.id == item.id }), catalogItem == item else { return false }
+        if !ownedFurnitureIDs.contains(catalogItem.id) {
+            guard spend(catalogItem.cost) else { return false }
+            ownedFurnitureIDs.insert(catalogItem.id)
+        }
+        placedFurnitureIDs.insert(catalogItem.id)
+        _ = advanceDailyChainIfMatching("decorate")
+        save(); return true
+    }
+    /// Puts an owned piece away; it can be placed again for free.
+    @discardableResult func storeFurniture(_ item:FurnitureItem)->Bool {
+        guard placedFurnitureIDs.contains(item.id) else { return false }
+        placedFurnitureIDs.remove(item.id); save(); return true
+    }
     // Side-slot decorations also satisfy the House Adventure. The legacy
     // main-slot dictionary is retained for older save compatibility.
     var hasPlacedAdventureDecoration: Bool {
@@ -309,6 +375,7 @@ struct SaveRecoveryInspection: Equatable {
         }
         return selectedItemsByRoom.values.contains(where: decorated)
             || selectedItemsByRoomSlot.values.contains(where: { $0.values.contains(where: decorated) })
+            || !placedFurnitureIDs.isEmpty
     }
     func moveCharacter(in roomID:String, x:Double, y:Double) { guard rooms.contains(where:{$0.id==roomID}) else{return}; characterPositionsByRoom[roomID]=CharacterPosition(x:min(1,max(0,x)),y:min(1,max(0,y))); save() }
     @discardableResult func dropCharacter(in roomID:String, x:Double, y:Double)->String? {
@@ -1006,12 +1073,12 @@ struct SaveRecoveryInspection: Equatable {
         reward(coins: rewardAmount)
         return true
     }
-    func resetProgress(){ coins=500;stars=0;selectedOutfitID="sunny";cookedRecipes=[];completedTasks=[];ownedRoomItemIDs=["sofa"];ownedOutfitIDs=["sunny"];selectedItemsByRoom=["living":"sofa"];characterProfile=CharacterProfile();characterNeeds=CharacterNeeds();interactionCounts=[:];selectedItemsByRoomSlot=["living":["main":"sofa"]];characterPositionsByRoom=[:];petProfile=PetProfile();petNeeds=PetNeeds();gardenProgress=GardenProgress();dailyLifeProgress=DailyLifeProgress();socialProgress=SocialProgress();playerSettings=PlayerSettings();claimedFriendQuestIDs=[];displayedKeepsakeIDsByRoom=[:];save() }
+    func resetProgress(){ coins=500;stars=0;selectedOutfitID="sunny";cookedRecipes=[];completedTasks=[];ownedRoomItemIDs=["sofa"];ownedOutfitIDs=["sunny"];selectedItemsByRoom=["living":"sofa"];characterProfile=CharacterProfile();characterNeeds=CharacterNeeds();interactionCounts=[:];selectedItemsByRoomSlot=["living":["main":"sofa"]];characterPositionsByRoom=[:];petProfile=PetProfile();petNeeds=PetNeeds();gardenProgress=GardenProgress();dailyLifeProgress=DailyLifeProgress();socialProgress=SocialProgress();playerSettings=PlayerSettings();claimedFriendQuestIDs=[];displayedKeepsakeIDsByRoom=[:];ownedFurnitureIDs=[];placedFurnitureIDs=[];save() }
     private func unlockRoomItem(_ item:RoomItem)->Bool { if ownsRoomItem(item){return true}; guard spend(item.cost) else{return false};ownedRoomItemIDs.insert(item.id);return true }
     private func unlockOutfit(_ outfit:Outfit)->Bool { if ownsOutfit(outfit){return true};guard spend(outfit.cost) else{return false};ownedOutfitIDs.insert(outfit.id);return true }
     private func spend(_ cost:Int)->Bool { guard cost>=0,coins>=cost else{return false};coins-=cost;return true }
     func completeOnboarding() { updateSettings(hasCompletedOnboarding: true) }
-    private func snapshot() -> SaveGame { SaveGame(schemaVersion: Self.currentSaveSchemaVersion, commitSequence: lastCommittedSequence + 1, coins:coins,stars:stars,selectedOutfitID:selectedOutfitID,cookedRecipes:cookedRecipes,completedTasks:completedTasks,ownedRoomItemIDs:ownedRoomItemIDs,ownedOutfitIDs:ownedOutfitIDs,selectedItemsByRoom:selectedItemsByRoom,characterProfile:characterProfile,characterNeeds:characterNeeds,interactionCounts:interactionCounts,selectedItemsByRoomSlot:selectedItemsByRoomSlot,characterPositionsByRoom:characterPositionsByRoom,petProfile:petProfile,petNeeds:petNeeds,gardenProgress:gardenProgress,dailyLifeProgress:dailyLifeProgress,socialProgress:socialProgress,playerSettings:playerSettings,claimedFriendQuestIDs:claimedFriendQuestIDs,displayedKeepsakeIDsByRoom:displayedKeepsakeIDsByRoom) }
+    private func snapshot() -> SaveGame { SaveGame(schemaVersion: Self.currentSaveSchemaVersion, commitSequence: lastCommittedSequence + 1, coins:coins,stars:stars,selectedOutfitID:selectedOutfitID,cookedRecipes:cookedRecipes,completedTasks:completedTasks,ownedRoomItemIDs:ownedRoomItemIDs,ownedOutfitIDs:ownedOutfitIDs,selectedItemsByRoom:selectedItemsByRoom,characterProfile:characterProfile,characterNeeds:characterNeeds,interactionCounts:interactionCounts,selectedItemsByRoomSlot:selectedItemsByRoomSlot,characterPositionsByRoom:characterPositionsByRoom,petProfile:petProfile,petNeeds:petNeeds,gardenProgress:gardenProgress,dailyLifeProgress:dailyLifeProgress,socialProgress:socialProgress,playerSettings:playerSettings,claimedFriendQuestIDs:claimedFriendQuestIDs,displayedKeepsakeIDsByRoom:displayedKeepsakeIDsByRoom,ownedFurnitureIDs:ownedFurnitureIDs,placedFurnitureIDs:placedFurnitureIDs) }
     // Treat an explicit, unrecognized schema marker as protected data, not as a
     // legacy save. This includes future schema versions, strings, null, booleans,
     // fractions and non-positive versions. Missing markers alone indicate legacy.
@@ -1422,6 +1489,9 @@ struct SaveRecoveryInspection: Equatable {
         claimedFriendQuestIDs=Set((s.claimedFriendQuestIDs ?? []).filter { id in friends.contains(where:{ friendQuestID(for:$0.id)==id || friendStoryPartyID(for:$0.id)==id || friendStoryRoomID(for:$0.id)==id || "keepsake.\($0.id)"==id }) || surpriseBadges.contains(where:{$0.id==id}) || id == "badge.collection.complete" })
         let ownedKeepsakeIDs=Set(friends.compactMap{ isFriendKeepsakeClaimed($0.id) ? friendKeepsake(for:$0.id)?.id : nil })
         displayedKeepsakeIDsByRoom=(s.displayedKeepsakeIDsByRoom ?? [:]).filter{roomIDs.contains($0.key)}.mapValues{Set($0.filter{ownedKeepsakeIDs.contains($0)})}.filter{!$0.value.isEmpty}
+        let furnitureIDs=Set(furniture.map(\.id))
+        ownedFurnitureIDs=(s.ownedFurnitureIDs ?? []).intersection(furnitureIDs)
+        placedFurnitureIDs=(s.placedFurnitureIDs ?? []).intersection(ownedFurnitureIDs)
         // v2.56: an edited/restored save could carry an over-long name or unknown
         // look IDs that the UI cannot draw. Normalise them like every other field.
         // (Accessory checks run after interactionCounts so earned items stay valid.)

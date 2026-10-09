@@ -189,8 +189,6 @@ struct RoomBackdrop: View {
             prop("star.fill", size: h * 0.06, color: Theme.sun, at: CGPoint(x: w * 0.2, y: h * 0.14))
             prop("star.fill", size: h * 0.04, color: Theme.sun, at: CGPoint(x: w * 0.82, y: h * 0.18))
         case "kitchen":
-            prop("refrigerator.fill", size: h * 0.34, color: Color(hex: 0x6BB8D9), at: CGPoint(x: w * 0.9, y: h * 0.58))
-            prop("oven.fill", size: h * 0.22, color: Color(hex: 0xFF8C69), at: CGPoint(x: w * 0.71, y: h * 0.62))
             prop("cup.and.saucer.fill", size: h * 0.08, color: Theme.pink, at: CGPoint(x: w * 0.18, y: h * 0.48))
         case "bathroom":
             prop("bathtub.fill", size: h * 0.28, color: Color(hex: 0x5DB3FF), at: CGPoint(x: w * 0.8, y: h * 0.72))
@@ -208,7 +206,6 @@ struct RoomBackdrop: View {
             prop("music.note", size: h * 0.08, color: Theme.lavender, at: CGPoint(x: w * 0.12, y: h * 0.56))
             prop("music.note", size: h * 0.06, color: Theme.pink, at: CGPoint(x: w * 0.28, y: h * 0.5))
             prop("photo.artframe", size: h * 0.12, color: Color(hex: 0xC48A5A), at: CGPoint(x: w * 0.82, y: h * 0.26))
-            prop("tv.fill", size: h * 0.14, color: Theme.ink.opacity(0.75), at: CGPoint(x: w * 0.18, y: h * 0.3))
         }
     }
 
@@ -269,5 +266,167 @@ struct RoomBackdrop: View {
             .position(x: w * 0.94, y: h * 0.88)
         Image(systemName: "figure.play").font(.system(size: h * 0.12)).foregroundStyle(Theme.peach.gradient)
             .position(x: w * 0.3, y: h * 0.6)
+    }
+}
+
+// MARK: - Room furniture
+
+/// Where each furniture piece stands in its room (unit coordinates) and how
+/// tall it is relative to the stage height.
+enum FurnitureSpots {
+    static func spot(for id: String) -> (point: CGPoint, size: CGFloat) {
+        switch id {
+        // Kitchen: appliances on the right around the snack bar, table on the left.
+        case "kitchen.fridge":    return (CGPoint(x: 0.90, y: 0.50), 0.34)
+        case "kitchen.oven":      return (CGPoint(x: 0.73, y: 0.57), 0.20)
+        case "kitchen.pot":       return (CGPoint(x: 0.73, y: 0.42), 0.08)
+        case "kitchen.sink":      return (CGPoint(x: 0.57, y: 0.57), 0.15)
+        case "kitchen.cabinet":   return (CGPoint(x: 0.80, y: 0.17), 0.15)
+        case "kitchen.pan":       return (CGPoint(x: 0.95, y: 0.19), 0.08)
+        case "kitchen.table":     return (CGPoint(x: 0.24, y: 0.68), 0.20)
+        case "kitchen.plate":     return (CGPoint(x: 0.24, y: 0.585), 0.05)
+        // Living room
+        case "living.tv":         return (CGPoint(x: 0.18, y: 0.30), 0.14)
+        case "living.fireplace":  return (CGPoint(x: 0.50, y: 0.54), 0.18)
+        case "living.clock":      return (CGPoint(x: 0.66, y: 0.14), 0.08)
+        case "living.bookshelf":  return (CGPoint(x: 0.95, y: 0.46), 0.22)
+        case "living.lamp":       return (CGPoint(x: 0.05, y: 0.46), 0.20)
+        case "living.armchair":   return (CGPoint(x: 0.48, y: 0.75), 0.13)
+        // Bedroom
+        case "bedroom.wardrobe":  return (CGPoint(x: 0.08, y: 0.48), 0.26)
+        case "bedroom.desk":      return (CGPoint(x: 0.62, y: 0.50), 0.09)
+        case "bedroom.teddy":     return (CGPoint(x: 0.71, y: 0.61), 0.08)
+        case "bedroom.pillow":    return (CGPoint(x: 0.87, y: 0.62), 0.06)
+        case "bedroom.globe":     return (CGPoint(x: 0.37, y: 0.55), 0.10)
+        case "bedroom.chair":     return (CGPoint(x: 0.52, y: 0.70), 0.12)
+        // Bathroom
+        case "bathroom.toilet":   return (CGPoint(x: 0.10, y: 0.62), 0.18)
+        case "bathroom.sink":     return (CGPoint(x: 0.30, y: 0.60), 0.16)
+        case "bathroom.mirror":   return (CGPoint(x: 0.30, y: 0.30), 0.13)
+        case "bathroom.towel":    return (CGPoint(x: 0.12, y: 0.30), 0.11)
+        case "bathroom.washer":   return (CGPoint(x: 0.48, y: 0.67), 0.16)
+        case "bathroom.duck":     return (CGPoint(x: 0.74, y: 0.62), 0.06)
+        // Garden
+        case "garden.tent":       return (CGPoint(x: 0.88, y: 0.52), 0.16)
+        case "garden.birdhouse":  return (CGPoint(x: 0.30, y: 0.38), 0.10)
+        case "garden.ball":       return (CGPoint(x: 0.46, y: 0.80), 0.06)
+        case "garden.umbrella":   return (CGPoint(x: 0.50, y: 0.58), 0.16)
+        case "garden.bicycle":    return (CGPoint(x: 0.68, y: 0.64), 0.10)
+        case "garden.carrot":     return (CGPoint(x: 0.94, y: 0.90), 0.06)
+        default:                  return (CGPoint(x: 0.5, y: 0.6), 0.1)
+        }
+    }
+
+    static func tint(for id: String) -> Color {
+        switch id {
+        case "kitchen.fridge": return Color(hex: 0x6BB8D9)
+        case "kitchen.oven": return Color(hex: 0xFF8C69)
+        case "kitchen.cabinet", "bedroom.wardrobe", "living.bookshelf", "kitchen.table": return Color(hex: 0xC48A5A)
+        case "kitchen.pan", "kitchen.sink", "bathroom.sink", "bathroom.washer": return Color(hex: 0x8AA4C8)
+        case "living.tv": return Theme.ink.opacity(0.75)
+        case "living.fireplace": return Color(hex: 0xE0785A)
+        case "living.clock", "bedroom.desk", "living.lamp": return Color(hex: 0xFFB84D)
+        case "living.armchair", "bedroom.chair": return Theme.lavender
+        case "bedroom.teddy": return Color(hex: 0xC48A5A)
+        case "bedroom.globe": return Theme.sky
+        case "bathroom.toilet": return Color(hex: 0x9FB6D6)
+        case "garden.tent": return Theme.peach
+        case "garden.birdhouse": return Color(hex: 0xC48A5A)
+        case "garden.ball": return Theme.ink
+        case "garden.umbrella": return Theme.pink
+        case "garden.bicycle": return Theme.sky
+        case "garden.carrot": return Color(hex: 0xFF8C3A)
+        default: return Theme.pink
+        }
+    }
+}
+
+/// Draws one furniture piece: an SF Symbol, or a small hand-built vector for
+/// items that have no symbol ("custom." icons).
+struct FurnitureArt: View {
+    let item: FurnitureItem
+    let size: CGFloat
+
+    var body: some View {
+        Group {
+            switch item.icon {
+            case "custom.plate": plate
+            case "custom.pot": pot
+            case "custom.pillow": pillow
+            case "custom.mirror": mirror
+            case "custom.towel": towel
+            case "custom.duck": duck
+            default:
+                Image(systemName: item.icon)
+                    .font(.system(size: size))
+                    .foregroundStyle(FurnitureSpots.tint(for: item.id).gradient)
+            }
+        }
+        .shadow(color: .black.opacity(0.10), radius: 3, y: 2)
+    }
+
+    private var plate: some View {
+        ZStack {
+            Ellipse().fill(Color.white).overlay(Ellipse().strokeBorder(Theme.pink, lineWidth: max(1.5, size * 0.08)))
+            Ellipse().strokeBorder(Theme.pink.opacity(0.35), lineWidth: 1).padding(size * 0.22)
+        }
+        .frame(width: size * 1.6, height: size * 0.7)
+    }
+
+    private var pot: some View {
+        let potColor = Color(hex: 0xE0785A)
+        return VStack(spacing: size * 0.02) {
+            Circle().fill(potColor.opacity(0.9)).frame(width: size * 0.18, height: size * 0.18)
+            Capsule().fill(potColor.gradient).frame(width: size * 1.15, height: size * 0.16)
+            ZStack {
+                RoundedRectangle(cornerRadius: size * 0.18, style: .continuous).fill(potColor.gradient)
+                    .frame(width: size, height: size * 0.62)
+                HStack { Capsule().fill(potColor).frame(width: size * 0.22, height: size * 0.12); Spacer(); Capsule().fill(potColor).frame(width: size * 0.22, height: size * 0.12) }
+                    .frame(width: size * 1.38)
+                Capsule().fill(Color.white.opacity(0.35)).frame(width: size * 0.5, height: size * 0.07).offset(y: -size * 0.1)
+            }
+        }
+    }
+
+    private var pillow: some View {
+        RoundedRectangle(cornerRadius: size * 0.32, style: .continuous)
+            .fill(LinearGradient(colors: [Color.white, Theme.pinkSoft], startPoint: .top, endPoint: .bottom))
+            .overlay(RoundedRectangle(cornerRadius: size * 0.32, style: .continuous).strokeBorder(Theme.pink.opacity(0.6), lineWidth: 1.5))
+            .frame(width: size * 1.7, height: size)
+    }
+
+    private var mirror: some View {
+        ZStack {
+            Ellipse().fill(LinearGradient(colors: [Color(hex: 0xE8F7FF), Color(hex: 0xB5E3FF)], startPoint: .topLeading, endPoint: .bottomTrailing))
+            Ellipse().strokeBorder(Color(hex: 0xF4C25B), lineWidth: max(2, size * 0.08))
+            Capsule().fill(Color.white.opacity(0.8)).frame(width: size * 0.08, height: size * 0.4).rotationEffect(.degrees(25)).offset(x: -size * 0.14, y: -size * 0.12)
+        }
+        .frame(width: size * 0.72, height: size)
+    }
+
+    private var towel: some View {
+        VStack(spacing: 0) {
+            Capsule().fill(Color(hex: 0x8AA4C8)).frame(width: size * 1.1, height: size * 0.1)
+            ZStack(alignment: .bottom) {
+                RoundedRectangle(cornerRadius: size * 0.08).fill(Theme.mint.gradient)
+                VStack(spacing: size * 0.06) {
+                    Rectangle().fill(Color.white.opacity(0.85)).frame(height: size * 0.06)
+                    Rectangle().fill(Color.white.opacity(0.85)).frame(height: size * 0.06)
+                }
+                .padding(.bottom, size * 0.12)
+            }
+            .frame(width: size * 0.8, height: size * 0.9)
+        }
+    }
+
+    private var duck: some View {
+        let yellow = Color(hex: 0xFFD23F)
+        return ZStack {
+            Ellipse().fill(yellow.gradient).frame(width: size * 1.3, height: size * 0.75).offset(y: size * 0.18)
+            Circle().fill(yellow).frame(width: size * 0.62, height: size * 0.62).offset(x: size * 0.28, y: -size * 0.22)
+            Circle().fill(Theme.ink).frame(width: size * 0.1, height: size * 0.1).offset(x: size * 0.38, y: -size * 0.28)
+            Capsule().fill(Color(hex: 0xFF8C3A)).frame(width: size * 0.3, height: size * 0.14).offset(x: size * 0.66, y: -size * 0.18)
+        }
+        .frame(width: size * 1.6, height: size * 1.2)
     }
 }

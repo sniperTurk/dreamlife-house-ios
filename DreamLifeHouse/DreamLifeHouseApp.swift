@@ -167,6 +167,11 @@ struct DreamLifeHouseApp: App {
                 if let plant = fixture.roomItems.first(where: { $0.id == "plant" }) {
                     _ = fixture.selectRoomItem(plant, in: "bedroom", slot: "main")
                 }
+                for id in ["living.tv", "living.bookshelf", "living.clock",
+                           "kitchen.fridge", "kitchen.oven", "kitchen.pot", "kitchen.cabinet",
+                           "kitchen.table", "kitchen.plate", "kitchen.pan", "kitchen.sink"] {
+                    if let item = fixture.furniture.first(where: { $0.id == id }) { _ = fixture.placeFurniture(item) }
+                }
                 _ = fixture.inviteFriend("luna")
                 _ = fixture.movePet(to: "living")
                 fixture.updatePet(name: "Pip", species: "cat")

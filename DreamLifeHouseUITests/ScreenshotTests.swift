@@ -31,6 +31,16 @@ final class ScreenshotTests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["topbar.coins"].firstMatch.waitForExistence(timeout: 20))
         snap(app, "01-house")
 
+        // New room furniture: open the kitchen and tap the fridge so the
+        // character's bilingual speech bubble is in the shot.
+        let kitchenRoom = app.buttons.containing(NSPredicate(format: "label CONTAINS[c] %@", "Mutfak")).firstMatch
+        if kitchenRoom.waitForExistence(timeout: 3) {
+            kitchenRoom.tap()
+            let fridge = app.buttons["room.furniture.kitchen.fridge"]
+            if fridge.waitForExistence(timeout: 3) { fridge.tap() }
+            snap(app, "01b-kitchen-room")
+        }
+
         tab(app, "Ben")
         snap(app, "02-me")
         if app.buttons["Gardırop"].waitForExistence(timeout: 3) { app.buttons["Gardırop"].tap() }

@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 @testable import DreamLifeHouse
 
 @MainActor
@@ -2546,5 +2547,58 @@ extension GameStoreTests {
         XCTAssertTrue(live.isSaveReadOnlyDueToExternalChanges)
         XCTAssertEqual(defaults.data(forKey: "save"), primary)
         XCTAssertEqual(defaults.data(forKey: "save.pending"), foreign)
+    }
+
+    // MARK: Room furniture
+
+    func testFurnitureBuyPlaceStoreAndPersist() {
+        let suite = "DreamLifeHouseTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        let store = GameStore(defaults: defaults, saveKey: "save")
+        let fridge = store.furniture.first { $0.id == "kitchen.fridge" }!
+        XCTAssertTrue(store.placeFurniture(fridge))
+        XCTAssertEqual(store.coins, 500 - fridge.cost)
+        XCTAssertTrue(store.isFurniturePlaced(fridge))
+        XCTAssertEqual(store.placedFurniture(in: "kitchen").map(\.id), ["kitchen.fridge"])
+        XCTAssertTrue(store.hasPlacedAdventureDecoration)
+
+        // Putting it away and back again is free.
+        XCTAssertTrue(store.storeFurniture(fridge))
+        XCTAssertFalse(store.isFurniturePlaced(fridge))
+        XCTAssertTrue(store.placeFurniture(fridge))
+        XCTAssertEqual(store.coins, 500 - fridge.cost)
+
+        let restored = GameStore(defaults: defaults, saveKey: "save")
+        XCTAssertTrue(restored.ownsFurniture(fridge))
+        XCTAssertTrue(restored.isFurniturePlaced(fridge))
+    }
+
+    func testFurnitureNeedsEnoughCoinsAndCatalogItem() {
+        let (store, _) = makeStore()
+        let fake = FurnitureItem(id: "kitchen.fridge", roomID: "kitchen", name: "Refrigerator", nameTR: "Buzdolabı", icon: "refrigerator.fill", cost: 0)
+        XCTAssertFalse(store.placeFurniture(fake))
+        XCTAssertEqual(store.coins, 500)
+        var spent = 0
+        for item in store.furniture where store.coins >= item.cost { XCTAssertTrue(store.placeFurniture(item)); spent += item.cost }
+        XCTAssertEqual(store.coins, 500 - spent)
+        if let unaffordable = store.furniture.first(where: { !store.ownsFurniture($0) }) {
+            XCTAssertFalse(store.placeFurniture(unaffordable))
+        }
+    }
+
+    func testFurnitureCatalogIsCompleteAndDrawable() {
+        let (store, _) = makeStore()
+        XCTAssertEqual(Set(store.furniture.map(\.id)).count, store.furniture.count)
+        for room in store.rooms { XCTAssertGreaterThanOrEqual(store.furniture(in: room.id).count, 5, room.id) }
+        let kitchen = Set(store.furniture(in: "kitchen").map(\.nameTR))
+        for name in ["Mutfak masası", "Mutfak dolabı", "Fırın", "Buzdolabı", "Tabak", "Tencere"] { XCTAssertTrue(kitchen.contains(name), name) }
+        for item in store.furniture {
+            XCTAssertFalse(item.nameTR.isEmpty)
+            if !item.icon.hasPrefix("custom.") {
+                XCTAssertNotNil(UIImage(systemName: item.icon), "Missing SF Symbol \(item.icon) for \(item.id)")
+            }
+            XCTAssertNotEqual(FurnitureSpots.spot(for: item.id).point, CGPoint(x: 0.5, y: 0.6), "No spot for \(item.id)")
+        }
     }
 }

@@ -7,6 +7,9 @@ import SwiftUI
 struct HouseView: View {
  @EnvironmentObject var store:GameStore; @State private var roomID="living"; @State private var activeSlot="main"; @State private var message=loc("Choose a room and make it yours.", "Bir oda seç ve onu kendine göre süsle.")
  @State private var pendingPurchase: RoomItem?
+ @State private var pendingFurniture: FurnitureItem?
+ @State private var speech: String?
+ @State private var speechToken = 0
  var room:HouseRoom { store.rooms.first{$0.id==roomID} ?? store.rooms[0] }
  var interaction:(String,String,String) { switch roomID {case "bedroom":return("sleep",loc("Rest", "Dinlen"),"bed.double.fill");case "kitchen":return("snack",loc("Have Snack", "Atıştır"),"fork.knife");case "bathroom":return("shower",loc("Take Shower", "Duş Al"),"shower.fill");case "garden":return("play",loc("Play Outside", "Dışarıda Oyna"),"leaf.fill");default:return("dance",loc("Dance", "Dans Et"),"music.note")} }
  func contextMessage(_ action:String)->String { switch action {case "sleep":return loc("Bedtime! Energy restored.", "Uyku vakti! Enerji yenilendi.");case "dance":return loc("Dance zone! Fun increased.", "Dans pisti! Eğlence arttı.");case "snack":return loc("Kitchen stop! Hunger restored.", "Mutfak molası! Karnın doydu.");case "shower":return loc("Shower time! Cleanliness restored.", "Duş vakti! Tertemiz oldun.");case "play":return loc("Outdoor play! Fun increased.", "Dışarıda oyun! Eğlence arttı.");default:return loc("Activity complete!", "Etkinlik tamamlandı!")} }
@@ -80,13 +83,14 @@ struct HouseView: View {
     TopBar()
     roomPicker
     needsPanel
-    RoomStage(roomID: roomID, activeSlot: $activeSlot, message: $message, onDrop: { contextMessage($0) })
+    RoomStage(roomID: roomID, activeSlot: $activeSlot, message: $message, onDrop: { contextMessage($0) }, speech: speech, onFurnitureTap: { announce($0) })
      .padding(.horizontal)
     actionRow
     feedback
     radiantDecorationControls
     if roomID == "garden" { gardenActions }
     if roomID == "living" { LivingRoomCollection(message: $message) }
+    furnitureShop
     decorShop
     HouseGoals(message: $message)
    }
@@ -100,7 +104,7 @@ struct HouseView: View {
    GeometryReader { geo in
     HStack(alignment: .top, spacing: 4) {
      VStack(spacing: 8) {
-      RoomStage(roomID: roomID, activeSlot: $activeSlot, message: $message, onDrop: { contextMessage($0) }, stageHeight: nil)
+      RoomStage(roomID: roomID, activeSlot: $activeSlot, message: $message, onDrop: { contextMessage($0) }, speech: speech, onFurnitureTap: { announce($0) }, stageHeight: nil)
        .frame(minHeight: 200)
        .padding(.leading)
       actionRow
@@ -115,6 +119,7 @@ struct HouseView: View {
        radiantDecorationControls
        if roomID == "garden" { gardenActions }
        if roomID == "living" { LivingRoomCollection(message: $message) }
+       furnitureShop
        decorShop
        HouseGoals(message: $message)
       }
@@ -211,6 +216,102 @@ struct HouseView: View {
   .padding(.horizontal)
  }
 
+ // MARK: Room furniture
+
+ private var furnitureShop: some View {
+  VStack(alignment: .leading, spacing: 10) {
+   SectionTitle(title: loc("Room furniture", "Oda Eşyaları"), icon: "house.lodge.fill")
+    .padding(.horizontal)
+   Text(loc("Tap to add. Your character says each new thing in Turkish and English!", "Eklemek için dokun. Karakterin her yeni eşyayı Türkçe ve İngilizce söyler!"))
+    .font(.caption).foregroundStyle(Theme.inkSoft)
+    .padding(.horizontal)
+   ScrollView(.horizontal, showsIndicators: false) {
+    HStack(spacing: 12) {
+     ForEach(store.furniture(in: roomID)) { item in
+      let owned = store.ownsFurniture(item)
+      let placed = store.isFurniturePlaced(item)
+      Button { tapFurniture(item) } label: {
+       VStack(spacing: 6) {
+        FurnitureArt(item: item, size: 30)
+         .frame(height: 40)
+        Text(loc(item.name, item.nameTR)).font(.caption.weight(.heavy)).lineLimit(1).minimumScaleFactor(0.7)
+        if owned {
+         Text(placed ? loc("In room ✓", "Odada ✓") : loc("Put back", "Geri koy"))
+          .font(.caption2.weight(.bold))
+          .foregroundStyle(placed ? Theme.mint : Theme.inkSoft)
+        } else {
+         HStack(spacing: 3) {
+          Image(systemName: "circle.hexagongrid.fill").foregroundStyle(Theme.peach)
+          Text("\(item.cost)")
+         }
+         .font(.caption2.weight(.heavy))
+        }
+       }
+       .frame(width: 104, height: 100)
+      }
+      .buttonStyle(TileButtonStyle(selected: placed, tint: Theme.roomTint(roomID)))
+      .accessibilityIdentifier("house.furniture.\(item.id)")
+      .accessibilityLabel(owned ? loc("\(item.name), \(placed ? "in the room" : "stored")", "\(item.nameTR), \(placed ? "odada" : "kaldırıldı")") : loc("\(item.name), \(item.cost) coins", "\(item.nameTR), \(item.cost) jeton"))
+      .accessibilityHint(placed ? loc("Takes it out of the room.", "Odadan kaldırır.") : loc("Puts it in the room.", "Odaya koyar."))
+     }
+    }
+    .padding(.horizontal).padding(.vertical, 4)
+   }
+  }
+  .confirmationDialog(pendingFurniture.map { loc("Buy \($0.name)?", "\($0.nameTR) alınsın mı?") } ?? loc("Buy furniture?", "Eşya alınsın mı?"),
+                      isPresented: Binding(get: { pendingFurniture != nil }, set: { if !$0 { pendingFurniture = nil } }),
+                      titleVisibility: .visible, presenting: pendingFurniture) { item in
+   Button(loc("Buy for \(item.cost) coins", "\(item.cost) jetona al")) { placeFurniture(item) }
+   Button(loc("Not now", "Şimdi değil"), role: .cancel) { }
+  } message: { item in
+   Text(loc("\(item.name) costs \(item.cost) coins. You have \(store.coins) coins.", "\(item.nameTR) \(item.cost) jeton. Sende \(store.coins) jeton var."))
+  }
+ }
+
+ private func tapFurniture(_ item: FurnitureItem) {
+  if store.isFurniturePlaced(item) {
+   if store.storeFurniture(item) {
+    message = loc("\(item.name) put away.", "\(item.nameTR) kaldırıldı.")
+    Feedback.play(.tap, settings: store.playerSettings)
+   }
+   return
+  }
+  if store.ownsFurniture(item) { placeFurniture(item); return }
+  guard store.coins >= item.cost else {
+   message = loc("You need \(item.cost - store.coins) more coins for the \(item.name).", "\(item.nameTR) için \(item.cost - store.coins) jeton daha gerekiyor.")
+   Feedback.play(.warning, settings: store.playerSettings)
+   return
+  }
+  if store.playerSettings.purchaseConfirmation && item.cost > 0 { pendingFurniture = item } else { placeFurniture(item) }
+ }
+
+ private func placeFurniture(_ item: FurnitureItem) {
+  let wasOwned = store.ownsFurniture(item)
+  if store.placeFurniture(item) {
+   message = loc("\(item.name) added to the \(room.name)!", "\(item.nameTR) eklendi: \(trName(room.name))!")
+   Feedback.play(wasOwned ? .tap : .purchase, settings: store.playerSettings)
+   announce(item)
+  } else {
+   message = loc("You need more coins.", "Daha fazla jeton gerekiyor.")
+   Feedback.play(.warning, settings: store.playerSettings)
+  }
+ }
+
+ /// The character says the item's name in both languages, with a speech bubble.
+ private func announce(_ item: FurnitureItem) {
+  let tr = "\(item.nameTR)!", en = "\(item.name)!"
+  withAnimation(store.motionAnimationDuration == 0 ? nil : .spring(duration: 0.3)) {
+   speech = L10n.isTurkish ? "\(tr)  \(en)" : "\(en)  \(tr)"
+  }
+  Speaker.shared.sayBoth(turkish: item.nameTR, english: item.name, settings: store.playerSettings)
+  speechToken += 1
+  let token = speechToken
+  Task { @MainActor in
+   try? await Task.sleep(for: .seconds(3))
+   if token == speechToken { withAnimation { speech = nil } }
+  }
+ }
+
  // MARK: Decor shop
 
  private func placedItem(_ slot: String) -> RoomItem? {
@@ -297,6 +398,8 @@ private struct RoomStage: View {
  @Binding var activeSlot: String
  @Binding var message: String
  let onDrop: (String) -> String
+ var speech: String? = nil
+ var onFurnitureTap: (FurnitureItem) -> Void = { _ in }
  var stageHeight: CGFloat? = 320
  @GestureState private var dragOffset: CGSize = .zero
 
@@ -312,6 +415,7 @@ private struct RoomStage: View {
    let w = geo.size.width, h = geo.size.height
    ZStack {
     RoomBackdrop(roomID: roomID)
+    furnitureLayer(w: w, h: h)
     actionZone(w: w, h: h)
     decorSlot("main", at: layout.mainDecor, w: w, h: h)
     decorSlot("side", at: layout.sideDecor, w: w, h: h)
@@ -427,12 +531,39 @@ private struct RoomStage: View {
   }
  }
 
+ // Placed furniture. Tapping a piece makes the character say its name again.
+ private func furnitureLayer(w: CGFloat, h: CGFloat) -> some View {
+  ZStack {
+   ForEach(store.placedFurniture(in: roomID)) { item in
+    let spot = FurnitureSpots.spot(for: item.id)
+    Button { onFurnitureTap(item) } label: {
+     FurnitureArt(item: item, size: h * spot.size)
+    }
+    .buttonStyle(.plain)
+    .position(x: w * spot.point.x, y: h * spot.point.y)
+    .transition(.scale(scale: 0.3).combined(with: .opacity))
+    .accessibilityLabel(loc(item.name, item.nameTR))
+    .accessibilityHint(loc("Hear its name in Turkish and English.", "Adını Türkçe ve İngilizce dinle."))
+    .accessibilityIdentifier("room.furniture.\(item.id)")
+   }
+  }
+  .animation(store.motionAnimationDuration == 0 ? nil : .spring(duration: 0.4, bounce: 0.45), value: store.placedFurnitureIDs)
+ }
+
  private func player(w: CGFloat, h: CGFloat) -> some View {
   let pos = store.characterPosition(in: roomID)
   let look = AvatarLook(profile: store.characterProfile, outfitID: store.selectedOutfitID)
   return VStack(spacing: 0) {
    AvatarView(look: look, size: 78)
    NameTag(text: store.characterProfile.name, tint: Theme.pink)
+  }
+  .overlay(alignment: .top) {
+   if let speech {
+    SpeechBubble(text: speech)
+     .fixedSize()
+     .offset(y: -34)
+     .transition(.scale(scale: 0.4, anchor: .bottom).combined(with: .opacity))
+   }
   }
   .scaleEffect(dragOffset == .zero ? 1 : 1.08)
   .position(x: w * pos.x, y: h * pos.y)
@@ -455,6 +586,27 @@ private struct RoomStage: View {
   .accessibilityElement(children: .ignore)
   .accessibilityLabel(loc("\(store.characterProfile.name), your character", "\(store.characterProfile.name), karakterin"))
   .accessibilityHint(loc("Drag to move around the room. Drop on the dotted area to do the room activity.", "Odada gezinmek için sürükle. Oda etkinliği için noktalı alana bırak."))
+ }
+}
+
+private struct SpeechBubble: View {
+ let text: String
+ var body: some View {
+  VStack(spacing: 0) {
+   Text(text)
+    .font(.system(size: 13, weight: .black, design: .rounded))
+    .foregroundStyle(Theme.ink)
+    .padding(.horizontal, 10).padding(.vertical, 6)
+    .background(Capsule().fill(Color.white))
+    .overlay(Capsule().strokeBorder(Theme.pink.opacity(0.6), lineWidth: 2))
+   TriangleShape()
+    .fill(Color.white)
+    .frame(width: 12, height: 7)
+    .rotationEffect(.degrees(180))
+  }
+  .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
+  .accessibilityElement(children: .ignore)
+  .accessibilityLabel(text)
  }
 }
 
