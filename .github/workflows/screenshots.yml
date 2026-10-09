@@ -65,6 +65,8 @@ jobs:
               for a in test.get("attachments", []):
                   name = a.get("suggestedHumanReadableName", a["exportedFileName"])
                   base = name.split("_")[0]
+                  if not base[:2].isdigit():
+                      continue  # skip XCTest failure diagnostics
                   shutil.copy(os.path.join(raw, a["exportedFileName"]), f"shots/{kind}/{base}.png")
           print(kind, sorted(os.listdir(f"shots/{kind}")))
           PY

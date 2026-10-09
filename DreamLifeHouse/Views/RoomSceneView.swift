@@ -189,7 +189,7 @@ struct RoomBackdrop: View {
             prop("star.fill", size: h * 0.06, color: Theme.sun, at: CGPoint(x: w * 0.2, y: h * 0.14))
             prop("star.fill", size: h * 0.04, color: Theme.sun, at: CGPoint(x: w * 0.82, y: h * 0.18))
         case "kitchen":
-            prop("cup.and.saucer.fill", size: h * 0.08, color: Theme.pink, at: CGPoint(x: w * 0.18, y: h * 0.48))
+            prop("cup.and.saucer.fill", size: h * 0.07, color: Theme.pink, at: CGPoint(x: w * 0.1, y: h * 0.4))
         case "bathroom":
             prop("bathtub.fill", size: h * 0.28, color: Color(hex: 0x5DB3FF), at: CGPoint(x: w * 0.8, y: h * 0.72))
             prop("shower.fill", size: h * 0.16, color: Color(hex: 0x8AA4C8), at: CGPoint(x: w * 0.88, y: h * 0.38))
@@ -277,7 +277,7 @@ enum FurnitureSpots {
     static func spot(for id: String) -> (point: CGPoint, size: CGFloat) {
         switch id {
         // Kitchen: appliances on the right around the snack bar, table on the left.
-        case "kitchen.fridge":    return (CGPoint(x: 0.90, y: 0.50), 0.34)
+        case "kitchen.fridge":    return (CGPoint(x: 0.87, y: 0.50), 0.32)
         case "kitchen.oven":      return (CGPoint(x: 0.73, y: 0.57), 0.20)
         case "kitchen.pot":       return (CGPoint(x: 0.73, y: 0.42), 0.08)
         case "kitchen.sink":      return (CGPoint(x: 0.57, y: 0.57), 0.15)

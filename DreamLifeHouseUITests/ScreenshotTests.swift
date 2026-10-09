@@ -46,7 +46,7 @@ final class ScreenshotTests: XCTestCase {
         if start.waitForExistence(timeout: 3) {
             start.tap()
             func tapID(_ id: String) {
-                let b = app.buttons[id]
+                let b = app.buttons[id].firstMatch
                 if b.waitForExistence(timeout: 3) { b.tap() }
             }
             tapID("routine.goodMorning")

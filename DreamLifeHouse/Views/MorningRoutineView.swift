@@ -119,7 +119,7 @@ struct MorningRoutineView: View {
         GeometryReader { geo in
             let w = geo.size.width, h = geo.size.height
             let avatarSize = min(h * 0.5, w * 0.36, 190)
-            let center = CGPoint(x: w * (step == 2 ? 0.3 : 0.45), y: h * 0.6)
+            let center = CGPoint(x: w * (step >= 2 ? 0.37 : 0.45), y: h * 0.6)
             ZStack {
                 RoomBackdrop(roomID: step <= 1 ? "bedroom" : "kitchen")
                 if step == 2 || (step == 3 && !inGarden) { breakfastTable(w: w, h: h) }
