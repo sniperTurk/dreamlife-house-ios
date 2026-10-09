@@ -36,6 +36,8 @@ struct TasksView: View {
                         .foregroundStyle(Theme.inkSoft)
 
                     dayCard
+                    RoutineLauncherCard(showWhenDone: true)
+                        .padding(.horizontal, -16)
 
                     ForEach(tasks) { task in
                         let done = store.completedTasks.contains(task.id)

@@ -46,6 +46,7 @@ struct AvatarLook: Equatable {
         switch outfitID {
         case "party": return Color(hex: 0xA77BFF)
         case "sport": return Color(hex: 0x2EC4B6)
+        case "pajamas": return Color(hex: 0x9DB8F0)
         case "creative": return Color(hex: 0xFF6F8E)
         default: return Color(hex: 0xFFBE3B)
         }
@@ -54,6 +55,7 @@ struct AvatarLook: Equatable {
         switch outfitID {
         case "party": return Color(hex: 0xFFD6F5)
         case "sport": return .white
+        case "pajamas": return Color(hex: 0xFFF3B0)
         case "creative": return Color(hex: 0xFFE38A)
         default: return Color(hex: 0xFFF4D6)
         }
@@ -62,6 +64,7 @@ struct AvatarLook: Equatable {
         switch outfitID {
         case "party": return "sparkles"
         case "sport": return "bolt.fill"
+        case "pajamas": return "moon.stars.fill"
         case "creative": return "paintpalette.fill"
         default: return "sun.max.fill"
         }

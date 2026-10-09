@@ -2601,4 +2601,68 @@ extension GameStoreTests {
             XCTAssertNotEqual(FurnitureSpots.spot(for: item.id).point, CGPoint(x: 0.5, y: 0.6), "No spot for \(item.id)")
         }
     }
+
+    // MARK: Morning routine & farm
+
+    func testMorningRoutineRunsInOrderAndRewards() {
+        let (store, _) = makeStore()
+        XCTAssertEqual(store.routine.step, 0)
+        XCTAssertFalse(store.wearRoutineClothing("tshirt"), "Cannot dress before good morning")
+        XCTAssertTrue(store.sayGoodMorning())
+        XCTAssertFalse(store.sayGoodMorning())
+        XCTAssertFalse(store.wearRoutineClothing("tuxedo"))
+        for item in store.routineClothes { XCTAssertTrue(store.wearRoutineClothing(item.id)) }
+        XCTAssertEqual(store.routine.step, 2)
+        XCTAssertEqual(store.selectedOutfitID, "sport")
+        XCTAssertEqual(store.coins, 520)
+
+        XCTAssertTrue(store.addToBreakfastPlate("egg"))
+        XCTAssertFalse(store.addToBreakfastPlate("egg"), "No duplicates on the plate")
+        for id in ["bread", "cheese", "olives", "tomato"] { XCTAssertTrue(store.addToBreakfastPlate(id)) }
+        XCTAssertFalse(store.addToBreakfastPlate("milk"), "Plate holds five")
+        XCTAssertTrue(store.removeFromBreakfastPlate("tomato"))
+        for id in store.routine.plate { XCTAssertTrue(store.eatFromPlate(id)) }
+        XCTAssertEqual(store.routine.step, 3)
+        XCTAssertEqual(store.routine.eaten, ["egg", "bread", "cheese", "olives"])
+        XCTAssertEqual(store.coins, 550)
+    }
+
+    func testFarmPickingFeedingAndCompletion() {
+        let (store, _) = makeStore()
+        XCTAssertEqual(store.feedAnimal("cow", with: "corn"), .wrongFood)
+        XCTAssertEqual(store.feedAnimal("horse", with: "apple"), .noFruit)
+        for _ in 0..<GameStore.fruitsPerTreePerDay { XCTAssertTrue(store.pickFruit("apple")) }
+        XCTAssertFalse(store.pickFruit("apple"), "Tree is empty for today")
+        XCTAssertEqual(store.fruitBasket["apple"], 3)
+        XCTAssertEqual(store.feedAnimal("horse", with: "apple"), .happy)
+        XCTAssertEqual(store.fruitBasket["apple"], 2)
+        XCTAssertEqual(store.feedAnimal("chicken", with: "corn"), .happy)
+        XCTAssertEqual(store.feedAnimal("chicken", with: "corn"), .happy)
+        XCTAssertEqual(store.routine.fed, ["horse", "chicken"])
+        XCTAssertFalse(store.isRoutineDone, "Garden counts only after breakfast")
+
+        // Finish the earlier steps, then the garden goal completes the day.
+        store.sayGoodMorning()
+        store.routineClothes.forEach { store.wearRoutineClothing($0.id) }
+        store.addToBreakfastPlate("milk"); store.eatFromPlate("milk")
+        XCTAssertEqual(store.routine.step, 3)
+        XCTAssertEqual(store.feedAnimal("rabbit", with: "carrot"), .happy)
+        XCTAssertTrue(store.isRoutineDone)
+    }
+
+    func testRoutineResetsOnNewDayButBasketPersists() {
+        let suite = "DreamLifeHouseTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        let store = GameStore(defaults: defaults, saveKey: "save")
+        store.sayGoodMorning()
+        XCTAssertTrue(store.pickFruit("pear"))
+        let restored = GameStore(defaults: defaults, saveKey: "save")
+        XCTAssertEqual(restored.routine.step, 1)
+        XCTAssertEqual(restored.fruitBasket["pear"], 1)
+        restored.dailyLifeProgress.day += 1
+        XCTAssertEqual(restored.routine.step, 0)
+        XCTAssertEqual(restored.fruitsLeft(on: "pear"), GameStore.fruitsPerTreePerDay)
+        XCTAssertEqual(restored.fruitBasket["pear"], 1)
+    }
 }

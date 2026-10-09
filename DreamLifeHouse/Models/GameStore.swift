@@ -17,6 +17,21 @@ struct RoomItem: Identifiable, Equatable { let id: String; let name: String; let
 /// piece it owns at once. Names are stored in both languages because the
 /// character reads each new piece aloud in Turkish and English.
 struct FurnitureItem: Identifiable, Equatable { let id: String; let roomID: String; let name: String; let nameTR: String; let icon: String; let cost: Int }
+/// Something the child names aloud during the daily routine: a clothing item,
+/// a breakfast food, a fruit, an animal or animal food. Drawn with emoji.
+struct RoutineThing: Identifiable, Equatable { let id: String; let name: String; let nameTR: String; let emoji: String }
+/// Today's morning routine: 0 good morning → 1 get dressed → 2 breakfast →
+/// 3 garden (pick fruit, feed animals) → 4 done. Resets when the day changes.
+struct DailyRoutine: Codable, Equatable {
+    var day: Int = 0
+    var step: Int = 0
+    var worn: [String] = []
+    var plate: [String] = []
+    var eaten: [String] = []
+    var picked: [String:Int] = [:]
+    var fed: [String] = []
+}
+enum FeedResult: Equatable { case happy, wrongFood, noFruit, unknown }
 struct Outfit: Identifiable, Equatable { let id: String; let name: String; let icon: String; let cost: Int }
 struct HouseRoom: Identifiable, Equatable { let id: String; let name: String; let icon: String; let accentIcon: String }
 struct CharacterOption: Identifiable, Equatable { let id: String; let name: String; let icon: String }
@@ -83,6 +98,8 @@ private struct SaveGame: Codable {
     var displayedKeepsakeIDsByRoom: [String:Set<String>]?
     var ownedFurnitureIDs: Set<String>?
     var placedFurnitureIDs: Set<String>?
+    var dailyRoutine: DailyRoutine?
+    var fruitBasket: [String:Int]?
 }
 
 // A lossless, local-only package for parents to preserve conflicting save
@@ -238,6 +255,8 @@ struct SaveRecoveryInspection: Equatable {
     @Published private(set) var displayedKeepsakeIDsByRoom: [String:Set<String>] = [:]
     @Published private(set) var ownedFurnitureIDs: Set<String> = []
     @Published private(set) var placedFurnitureIDs: Set<String> = []
+    @Published private(set) var storedRoutine = DailyRoutine()
+    @Published private(set) var fruitBasket: [String:Int] = [:]
     // A future-version or unrecognized-schema save must never be overwritten.
     // Gameplay remains available as a non-persistent preview, with a visible warning.
     @Published private(set) var isSaveReadOnlyDueToNewerVersion = false
@@ -288,6 +307,51 @@ struct SaveRecoveryInspection: Equatable {
         FriendProfile(id:"milo",name:"Milo",icon:"fork.knife",favoriteActivity:"cook")
     ]
     let outfits = [Outfit(id:"sunny",name:"Sunny",icon:"sun.max.fill",cost:0),Outfit(id:"party",name:"Party",icon:"sparkles",cost:80),Outfit(id:"sport",name:"Sport",icon:"figure.run",cost:100),Outfit(id:"creative",name:"Creative",icon:"paintpalette.fill",cost:120)]
+
+    // MARK: Daily routine catalog
+    let routineClothes = [
+        RoutineThing(id:"tshirt", name:"T-shirt", nameTR:"Tişört", emoji:"👕"),
+        RoutineThing(id:"shorts", name:"Shorts", nameTR:"Şort", emoji:"🩳"),
+        RoutineThing(id:"socks", name:"Socks", nameTR:"Çorap", emoji:"🧦"),
+        RoutineThing(id:"sneakers", name:"Sneakers", nameTR:"Spor ayakkabı", emoji:"👟"),
+        RoutineThing(id:"cap", name:"Cap", nameTR:"Şapka", emoji:"🧢")
+    ]
+    let breakfastFoods = [
+        RoutineThing(id:"egg", name:"Egg", nameTR:"Yumurta", emoji:"🍳"),
+        RoutineThing(id:"bread", name:"Bread", nameTR:"Ekmek", emoji:"🍞"),
+        RoutineThing(id:"cheese", name:"Cheese", nameTR:"Peynir", emoji:"🧀"),
+        RoutineThing(id:"olives", name:"Olives", nameTR:"Zeytin", emoji:"🫒"),
+        RoutineThing(id:"tomato", name:"Tomato", nameTR:"Domates", emoji:"🍅"),
+        RoutineThing(id:"cucumber", name:"Cucumber", nameTR:"Salatalık", emoji:"🥒"),
+        RoutineThing(id:"honey", name:"Honey", nameTR:"Bal", emoji:"🍯"),
+        RoutineThing(id:"milk", name:"Milk", nameTR:"Süt", emoji:"🥛")
+    ]
+    let fruits = [
+        RoutineThing(id:"apple", name:"Apple", nameTR:"Elma", emoji:"🍎"),
+        RoutineThing(id:"orange", name:"Orange", nameTR:"Portakal", emoji:"🍊"),
+        RoutineThing(id:"pear", name:"Pear", nameTR:"Armut", emoji:"🍐"),
+        RoutineThing(id:"cherry", name:"Cherry", nameTR:"Kiraz", emoji:"🍒")
+    ]
+    let farmAnimals = [
+        RoutineThing(id:"chicken", name:"Chicken", nameTR:"Tavuk", emoji:"🐔"),
+        RoutineThing(id:"cow", name:"Cow", nameTR:"İnek", emoji:"🐄"),
+        RoutineThing(id:"sheep", name:"Sheep", nameTR:"Koyun", emoji:"🐑"),
+        RoutineThing(id:"rabbit", name:"Rabbit", nameTR:"Tavşan", emoji:"🐰"),
+        RoutineThing(id:"duck", name:"Duck", nameTR:"Ördek", emoji:"🦆"),
+        RoutineThing(id:"horse", name:"Horse", nameTR:"At", emoji:"🐴")
+    ]
+    let animalFoods = [
+        RoutineThing(id:"corn", name:"Corn", nameTR:"Mısır", emoji:"🌽"),
+        RoutineThing(id:"grass", name:"Grass", nameTR:"Ot", emoji:"🌿"),
+        RoutineThing(id:"carrot", name:"Carrot", nameTR:"Havuç", emoji:"🥕")
+    ]
+    /// What each animal likes. Fruit comes from the basket.
+    let animalDiet: [String:Set<String>] = [
+        "chicken":["corn"], "duck":["corn"], "cow":["grass"], "sheep":["grass"],
+        "rabbit":["carrot"], "horse":["carrot","apple","pear"]
+    ]
+    static let fruitsPerTreePerDay = 3
+    static let maxPlateItems = 5
 
     // Icons that start with "custom." are drawn by FurnitureArt instead of SF Symbols.
     let furniture = [
@@ -344,6 +408,103 @@ struct SaveRecoveryInspection: Equatable {
         save()
         return true
     }
+    // MARK: Daily routine
+    /// Today's routine; a routine saved on another day reads as a fresh one.
+    var routine: DailyRoutine {
+        storedRoutine.day == dailyLifeProgress.day ? storedRoutine : DailyRoutine(day: dailyLifeProgress.day)
+    }
+    var isRoutineDone: Bool { routine.step >= 4 }
+    var routineGardenGoal: (fruits: Int, animals: Int) { (3, 3) }
+    var routinePickedCount: Int { routine.picked.values.reduce(0, +) }
+    func fruitsLeft(on fruitID: String) -> Int { max(0, Self.fruitsPerTreePerDay - routine.picked[fruitID, default: 0]) }
+    func animalLikes(_ animalID: String) -> [RoutineThing] {
+        let ids = animalDiet[animalID] ?? []
+        return (animalFoods + fruits).filter { ids.contains($0.id) }
+    }
+
+    private func updateRoutine(_ change: (inout DailyRoutine) -> Void) {
+        var r = routine; change(&r); storedRoutine = r
+    }
+
+    @discardableResult func sayGoodMorning() -> Bool {
+        guard routine.step == 0 else { return false }
+        updateRoutine { $0.step = 1 }
+        save(); return true
+    }
+
+    /// Puts on one piece of sportswear. When everything is on, the character
+    /// wears the Sport outfit (given for free) and the step is rewarded.
+    @discardableResult func wearRoutineClothing(_ id: String) -> Bool {
+        guard routine.step == 1, routineClothes.contains(where: { $0.id == id }), !routine.worn.contains(id) else { return false }
+        updateRoutine { $0.worn.append(id) }
+        if routine.worn.count == routineClothes.count {
+            ownedOutfitIDs.insert("sport"); selectedOutfitID = "sport"
+            updateRoutine { $0.step = 2 }
+            coins = Self.saturatedAdd(coins, 20); stars = Self.saturatedAdd(stars, 1)
+        }
+        save(); return true
+    }
+
+    @discardableResult func addToBreakfastPlate(_ id: String) -> Bool {
+        guard routine.step == 2, breakfastFoods.contains(where: { $0.id == id }),
+              !routine.plate.contains(id), routine.plate.count < Self.maxPlateItems else { return false }
+        updateRoutine { $0.plate.append(id) }
+        save(); return true
+    }
+
+    @discardableResult func removeFromBreakfastPlate(_ id: String) -> Bool {
+        guard routine.step == 2, routine.plate.contains(id) else { return false }
+        updateRoutine { $0.plate.removeAll { $0 == id } }
+        save(); return true
+    }
+
+    /// The character eats one thing from the plate. Eating the last one
+    /// finishes breakfast: hunger is restored and the step is rewarded.
+    @discardableResult func eatFromPlate(_ id: String) -> Bool {
+        guard routine.step == 2, routine.plate.contains(id) else { return false }
+        updateRoutine { $0.plate.removeAll { $0 == id }; $0.eaten.append(id) }
+        characterNeeds.hunger = min(100, characterNeeds.hunger + 10)
+        if routine.plate.isEmpty {
+            updateRoutine { $0.step = 3 }
+            characterNeeds.hunger = min(100, characterNeeds.hunger + 20)
+            coins = Self.saturatedAdd(coins, 30); stars = Self.saturatedAdd(stars, 1)
+        }
+        save(); return true
+    }
+
+    @discardableResult func pickFruit(_ id: String) -> Bool {
+        guard fruits.contains(where: { $0.id == id }), fruitsLeft(on: id) > 0 else { return false }
+        updateRoutine { $0.picked[id, default: 0] += 1 }
+        fruitBasket[id] = min(99, fruitBasket[id, default: 0] + 1)
+        coins = Self.saturatedAdd(coins, 2)
+        completeGardenStepIfReady()
+        save(); return true
+    }
+
+    func feedAnimal(_ animalID: String, with foodID: String) -> FeedResult {
+        guard farmAnimals.contains(where: { $0.id == animalID }),
+              animalFoods.contains(where: { $0.id == foodID }) || fruits.contains(where: { $0.id == foodID }) else { return .unknown }
+        guard animalDiet[animalID]?.contains(foodID) == true else { return .wrongFood }
+        if fruits.contains(where: { $0.id == foodID }) {
+            guard fruitBasket[foodID, default: 0] > 0 else { return .noFruit }
+            fruitBasket[foodID, default: 0] -= 1
+            if fruitBasket[foodID] == 0 { fruitBasket[foodID] = nil }
+        }
+        if !routine.fed.contains(animalID) {
+            updateRoutine { $0.fed.append(animalID) }
+            coins = Self.saturatedAdd(coins, 5)
+        }
+        characterNeeds.fun = min(100, characterNeeds.fun + 3)
+        completeGardenStepIfReady()
+        save(); return .happy
+    }
+
+    private func completeGardenStepIfReady() {
+        guard routine.step == 3, routinePickedCount >= routineGardenGoal.fruits, routine.fed.count >= routineGardenGoal.animals else { return }
+        updateRoutine { $0.step = 4 }
+        coins = Self.saturatedAdd(coins, 40); stars = Self.saturatedAdd(stars, 2)
+    }
+
     // MARK: Room furniture
     func furniture(in roomID:String)->[FurnitureItem] { furniture.filter { $0.roomID == roomID } }
     func placedFurniture(in roomID:String)->[FurnitureItem] { furniture.filter { $0.roomID == roomID && placedFurnitureIDs.contains($0.id) } }
@@ -1073,12 +1234,12 @@ struct SaveRecoveryInspection: Equatable {
         reward(coins: rewardAmount)
         return true
     }
-    func resetProgress(){ coins=500;stars=0;selectedOutfitID="sunny";cookedRecipes=[];completedTasks=[];ownedRoomItemIDs=["sofa"];ownedOutfitIDs=["sunny"];selectedItemsByRoom=["living":"sofa"];characterProfile=CharacterProfile();characterNeeds=CharacterNeeds();interactionCounts=[:];selectedItemsByRoomSlot=["living":["main":"sofa"]];characterPositionsByRoom=[:];petProfile=PetProfile();petNeeds=PetNeeds();gardenProgress=GardenProgress();dailyLifeProgress=DailyLifeProgress();socialProgress=SocialProgress();playerSettings=PlayerSettings();claimedFriendQuestIDs=[];displayedKeepsakeIDsByRoom=[:];ownedFurnitureIDs=[];placedFurnitureIDs=[];save() }
+    func resetProgress(){ coins=500;stars=0;selectedOutfitID="sunny";cookedRecipes=[];completedTasks=[];ownedRoomItemIDs=["sofa"];ownedOutfitIDs=["sunny"];selectedItemsByRoom=["living":"sofa"];characterProfile=CharacterProfile();characterNeeds=CharacterNeeds();interactionCounts=[:];selectedItemsByRoomSlot=["living":["main":"sofa"]];characterPositionsByRoom=[:];petProfile=PetProfile();petNeeds=PetNeeds();gardenProgress=GardenProgress();dailyLifeProgress=DailyLifeProgress();socialProgress=SocialProgress();playerSettings=PlayerSettings();claimedFriendQuestIDs=[];displayedKeepsakeIDsByRoom=[:];ownedFurnitureIDs=[];placedFurnitureIDs=[];storedRoutine=DailyRoutine();fruitBasket=[:];save() }
     private func unlockRoomItem(_ item:RoomItem)->Bool { if ownsRoomItem(item){return true}; guard spend(item.cost) else{return false};ownedRoomItemIDs.insert(item.id);return true }
     private func unlockOutfit(_ outfit:Outfit)->Bool { if ownsOutfit(outfit){return true};guard spend(outfit.cost) else{return false};ownedOutfitIDs.insert(outfit.id);return true }
     private func spend(_ cost:Int)->Bool { guard cost>=0,coins>=cost else{return false};coins-=cost;return true }
     func completeOnboarding() { updateSettings(hasCompletedOnboarding: true) }
-    private func snapshot() -> SaveGame { SaveGame(schemaVersion: Self.currentSaveSchemaVersion, commitSequence: lastCommittedSequence + 1, coins:coins,stars:stars,selectedOutfitID:selectedOutfitID,cookedRecipes:cookedRecipes,completedTasks:completedTasks,ownedRoomItemIDs:ownedRoomItemIDs,ownedOutfitIDs:ownedOutfitIDs,selectedItemsByRoom:selectedItemsByRoom,characterProfile:characterProfile,characterNeeds:characterNeeds,interactionCounts:interactionCounts,selectedItemsByRoomSlot:selectedItemsByRoomSlot,characterPositionsByRoom:characterPositionsByRoom,petProfile:petProfile,petNeeds:petNeeds,gardenProgress:gardenProgress,dailyLifeProgress:dailyLifeProgress,socialProgress:socialProgress,playerSettings:playerSettings,claimedFriendQuestIDs:claimedFriendQuestIDs,displayedKeepsakeIDsByRoom:displayedKeepsakeIDsByRoom,ownedFurnitureIDs:ownedFurnitureIDs,placedFurnitureIDs:placedFurnitureIDs) }
+    private func snapshot() -> SaveGame { SaveGame(schemaVersion: Self.currentSaveSchemaVersion, commitSequence: lastCommittedSequence + 1, coins:coins,stars:stars,selectedOutfitID:selectedOutfitID,cookedRecipes:cookedRecipes,completedTasks:completedTasks,ownedRoomItemIDs:ownedRoomItemIDs,ownedOutfitIDs:ownedOutfitIDs,selectedItemsByRoom:selectedItemsByRoom,characterProfile:characterProfile,characterNeeds:characterNeeds,interactionCounts:interactionCounts,selectedItemsByRoomSlot:selectedItemsByRoomSlot,characterPositionsByRoom:characterPositionsByRoom,petProfile:petProfile,petNeeds:petNeeds,gardenProgress:gardenProgress,dailyLifeProgress:dailyLifeProgress,socialProgress:socialProgress,playerSettings:playerSettings,claimedFriendQuestIDs:claimedFriendQuestIDs,displayedKeepsakeIDsByRoom:displayedKeepsakeIDsByRoom,ownedFurnitureIDs:ownedFurnitureIDs,placedFurnitureIDs:placedFurnitureIDs,dailyRoutine:storedRoutine,fruitBasket:fruitBasket) }
     // Treat an explicit, unrecognized schema marker as protected data, not as a
     // legacy save. This includes future schema versions, strings, null, booleans,
     // fractions and non-positive versions. Missing markers alone indicate legacy.
@@ -1492,6 +1653,18 @@ struct SaveRecoveryInspection: Equatable {
         let furnitureIDs=Set(furniture.map(\.id))
         ownedFurnitureIDs=(s.ownedFurnitureIDs ?? []).intersection(furnitureIDs)
         placedFurnitureIDs=(s.placedFurnitureIDs ?? []).intersection(ownedFurnitureIDs)
+        let fruitIDs=Set(fruits.map(\.id))
+        fruitBasket=(s.fruitBasket ?? [:]).filter { fruitIDs.contains($0.key) && $0.value > 0 }.mapValues { min(99, $0) }
+        if var r=s.dailyRoutine {
+            let clothes=Set(routineClothes.map(\.id)), foods=Set(breakfastFoods.map(\.id)), animals=Set(farmAnimals.map(\.id))
+            r.step=min(4, max(0, r.step))
+            r.worn=r.worn.filter { clothes.contains($0) }
+            r.plate=Array(r.plate.filter { foods.contains($0) }.prefix(Self.maxPlateItems))
+            r.eaten=r.eaten.filter { foods.contains($0) }
+            r.picked=r.picked.filter { fruitIDs.contains($0.key) }.mapValues { min(Self.fruitsPerTreePerDay, max(0, $0)) }
+            r.fed=r.fed.filter { animals.contains($0) }
+            storedRoutine=r
+        } else { storedRoutine=DailyRoutine() }
         // v2.56: an edited/restored save could carry an over-long name or unknown
         // look IDs that the UI cannot draw. Normalise them like every other field.
         // (Accessory checks run after interactionCounts so earned items stay valid.)

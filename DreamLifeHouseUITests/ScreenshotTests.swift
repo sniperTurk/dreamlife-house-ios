@@ -41,6 +41,33 @@ final class ScreenshotTests: XCTestCase {
             snap(app, "01b-kitchen-room")
         }
 
+        // Morning routine: dressing, breakfast and the farm garden.
+        let start = app.buttons["routine.start"]
+        if start.waitForExistence(timeout: 3) {
+            start.tap()
+            func tapID(_ id: String) {
+                let b = app.buttons[id]
+                if b.waitForExistence(timeout: 3) { b.tap() }
+            }
+            tapID("routine.goodMorning")
+            tapID("routine.item.tshirt"); tapID("routine.item.shorts")
+            sleep(1)
+            snap(app, "01c-routine-dress")
+            tapID("routine.item.socks"); tapID("routine.item.sneakers"); tapID("routine.item.cap")
+            sleep(1)
+            for food in ["egg", "bread", "cheese", "tomato"] { tapID("routine.item.\(food)") }
+            sleep(1)
+            snap(app, "01d-breakfast")
+            tapID("routine.eat")
+            _ = app.buttons["routine.garden"].waitForExistence(timeout: 15)
+            tapID("routine.garden")
+            tapID("farm.fruit.apple"); tapID("farm.fruit.cherry")
+            tapID("farm.food.corn"); tapID("farm.animal.chicken")
+            sleep(1)
+            snap(app, "01e-garden")
+            tapID("routine.close")
+        }
+
         tab(app, "Ben")
         snap(app, "02-me")
         if app.buttons["Gardırop"].waitForExistence(timeout: 3) { app.buttons["Gardırop"].tap() }

@@ -10,15 +10,21 @@ final class Speaker {
     private var sessionReady = false
 
     func sayBoth(turkish: String, english: String, settings: PlayerSettings) {
+        say(L10n.isTurkish ? [(turkish, "tr-TR"), (english, "en-US")] : [(english, "en-US"), (turkish, "tr-TR")], settings: settings)
+    }
+
+    func sayEnglish(_ text: String, settings: PlayerSettings) {
+        say([(text, "en-US")], settings: settings)
+    }
+
+    /// Speaks each (text, language) part in order, interrupting anything still playing.
+    func say(_ parts: [(String, String)], settings: PlayerSettings) {
         guard settings.soundEnabled else { return }
         prepareSession()
         synthesizer.stopSpeaking(at: .immediate)
-        let pairs = L10n.isTurkish
-            ? [(turkish, "tr-TR"), (english, "en-US")]
-            : [(english, "en-US"), (turkish, "tr-TR")]
-        for (index, pair) in pairs.enumerated() {
-            let utterance = AVSpeechUtterance(string: pair.0)
-            utterance.voice = AVSpeechSynthesisVoice(language: pair.1)
+        for (index, part) in parts.enumerated() {
+            let utterance = AVSpeechUtterance(string: part.0)
+            utterance.voice = AVSpeechSynthesisVoice(language: part.1)
             utterance.pitchMultiplier = 1.6      // child-like voice
             utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.9
             utterance.preUtteranceDelay = index == 0 ? 0 : 0.25

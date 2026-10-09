@@ -10,6 +10,7 @@ struct HouseView: View {
  @State private var pendingFurniture: FurnitureItem?
  @State private var speech: String?
  @State private var speechToken = 0
+ @State private var showFarm = false
  var room:HouseRoom { store.rooms.first{$0.id==roomID} ?? store.rooms[0] }
  var interaction:(String,String,String) { switch roomID {case "bedroom":return("sleep",loc("Rest", "Dinlen"),"bed.double.fill");case "kitchen":return("snack",loc("Have Snack", "Atıştır"),"fork.knife");case "bathroom":return("shower",loc("Take Shower", "Duş Al"),"shower.fill");case "garden":return("play",loc("Play Outside", "Dışarıda Oyna"),"leaf.fill");default:return("dance",loc("Dance", "Dans Et"),"music.note")} }
  func contextMessage(_ action:String)->String { switch action {case "sleep":return loc("Bedtime! Energy restored.", "Uyku vakti! Enerji yenilendi.");case "dance":return loc("Dance zone! Fun increased.", "Dans pisti! Eğlence arttı.");case "snack":return loc("Kitchen stop! Hunger restored.", "Mutfak molası! Karnın doydu.");case "shower":return loc("Shower time! Cleanliness restored.", "Duş vakti! Tertemiz oldun.");case "play":return loc("Outdoor play! Fun increased.", "Dışarıda oyun! Eğlence arttı.");default:return loc("Activity complete!", "Etkinlik tamamlandı!")} }
@@ -81,6 +82,7 @@ struct HouseView: View {
   ScrollView(.vertical) {
    VStack(spacing: 14) {
     TopBar()
+    RoutineLauncherCard()
     roomPicker
     needsPanel
     RoomStage(roomID: roomID, activeSlot: $activeSlot, message: $message, onDrop: { contextMessage($0) }, speech: speech, onFurnitureTap: { announce($0) })
@@ -113,6 +115,7 @@ struct HouseView: View {
      .padding(.bottom, 8)
      ScrollView(.vertical) {
       VStack(spacing: 14) {
+       RoutineLauncherCard()
        roomPicker
        needsPanel
        feedback
@@ -208,12 +211,18 @@ struct HouseView: View {
    GardenAction(title: loc("Lounge", "Güneşlen"), icon: "sun.max.fill", tint: Theme.sun) {
     if store.performGardenActivity("lounge") { message = loc("Relaxed by the pool.", "Havuz başında dinlendin."); Feedback.play(.success, settings: store.playerSettings) }
    }
+   GardenAction(title: loc("Farm", "Çiftlik"), icon: "carrot.fill", tint: Theme.mint) {
+    showFarm = true
+    Feedback.play(.tap, settings: store.playerSettings)
+   }
+   .accessibilityIdentifier("garden.farm")
    GardenAction(title: loc("Pet Play", "Evcil Oyun"), icon: "pawprint.fill", tint: Theme.peach) {
     if store.performGardenActivity("petPlay") { message = loc("Garden play together!", "Bahçede birlikte oyun!"); Feedback.play(.success, settings: store.playerSettings) }
     else { message = loc("Bring your pet to the Garden first (Play › Pet).", "Önce evcil hayvanını Bahçe\'ye getir (Oyna › Evcil Hayvan).") }
    }
   }
   .padding(.horizontal)
+  .fullScreenCover(isPresented: $showFarm) { GardenFarmView(standalone: true).environmentObject(store) }
  }
 
  // MARK: Room furniture
