@@ -53,7 +53,7 @@ final class Speaker {
 
     /// True when a higher-quality (Enhanced/Premium) English voice is installed.
     var hasEnhancedEnglishVoice: Bool {
-        voice(for: "en-US").quality != .default
+        (voice(for: "en-US")?.quality ?? .default) != .default
     }
 
     private func voice(for language: String) -> AVSpeechSynthesisVoice? {
