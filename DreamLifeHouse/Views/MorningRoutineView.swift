@@ -224,7 +224,7 @@ struct MorningRoutineView: View {
                             VStack(spacing: 2) {
                                 Text(item.emoji).font(.system(size: 38))
                                 Text(item.nameTR).font(.caption.weight(.heavy)).foregroundStyle(Theme.ink).lineLimit(1).minimumScaleFactor(0.7)
-                                Text(item.name).font(.caption2.weight(.semibold)).foregroundStyle(Theme.inkSoft).lineLimit(1).minimumScaleFactor(0.7)
+                                Text(L10n.english(item.name)).font(.caption2.weight(.semibold)).foregroundStyle(Theme.inkSoft).lineLimit(1).minimumScaleFactor(0.7)
                             }
                             .frame(width: 84, height: 92)
                             .opacity(used ? 0.45 : 1)
@@ -314,7 +314,7 @@ struct MorningRoutineView: View {
                     withAnimation { sparkle = false }
                 }
             } else {
-                say("\(item.emoji) \(L10n.isTurkish ? item.nameTR : item.name)!", L10n.isTurkish ? item.name : item.nameTR,
+                say("\(item.emoji) \(L10n.isTurkish ? item.nameTR : item.name)!", L10n.isTurkish ? L10n.english(item.name) : item.nameTR,
                     speak: L10n.isTurkish ? [(item.nameTR, "tr-TR"), (item.name, "en-US")] : [(item.name, "en-US"), (item.nameTR, "tr-TR")])
             }
         } else if step == 2 {
@@ -322,7 +322,7 @@ struct MorningRoutineView: View {
                 _ = store.removeFromBreakfastPlate(item.id)
             } else if store.addToBreakfastPlate(item.id) {
                 Feedback.play(.tap, settings: store.playerSettings)
-                say("\(item.emoji) \(L10n.isTurkish ? item.nameTR : item.name)", L10n.isTurkish ? item.name : item.nameTR,
+                say("\(item.emoji) \(L10n.isTurkish ? item.nameTR : item.name)", L10n.isTurkish ? L10n.english(item.name) : item.nameTR,
                     speak: L10n.isTurkish ? [(item.nameTR, "tr-TR"), (item.name, "en-US")] : [(item.name, "en-US"), (item.nameTR, "tr-TR")])
             } else {
                 Feedback.play(.warning, settings: store.playerSettings)
@@ -339,7 +339,7 @@ struct MorningRoutineView: View {
             for id in store.routine.plate {
                 guard let food = store.breakfastFoods.first(where: { $0.id == id }) else { continue }
                 chewing = id
-                say("😋 \(food.name)! \(food.emoji)", food.nameTR, speak: [("\(food.name)! Yummy!", "en-US")])
+                say("😋 \(L10n.english(food.name)) \(food.emoji)", food.nameTR, speak: [(food.name, "en-US")])
                 try? await Task.sleep(for: .seconds(1.8))
                 _ = store.eatFromPlate(id)
                 chewing = nil
@@ -354,6 +354,7 @@ struct MorningRoutineView: View {
 
 /// Two-line speech bubble: what the character says, and the other language below.
 struct RoutineBubble: View {
+    @EnvironmentObject var store: GameStore
     let main: String
     let sub: String
     var body: some View {
@@ -378,6 +379,10 @@ struct RoutineBubble: View {
         .shadow(color: .black.opacity(0.12), radius: 5, y: 2)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(sub.isEmpty ? main : "\(main), \(sub)")
+        .contentShape(Rectangle())
+        .onTapGesture { Speaker.shared.repeatLast(settings: store.playerSettings) }
+        .accessibilityHint(loc("Tap to hear it again", "Tekrar dinlemek için dokun"))
+        .accessibilityAddTraits(.isButton)
         .accessibilityIdentifier("routine.bubble")
     }
 }
@@ -443,7 +448,10 @@ struct GardenFarmView: View {
             .padding(.horizontal, 12).padding(.vertical, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.white))
+            .contentShape(Rectangle())
+            .onTapGesture { Speaker.shared.repeatLast(settings: store.playerSettings) }
             .accessibilityElement(children: .combine)
+            .accessibilityHint(loc("Tap to hear it again", "Tekrar dinlemek için dokun"))
             .accessibilityIdentifier("farm.bubble")
             basket
         }
@@ -511,7 +519,7 @@ struct GardenFarmView: View {
                 .accessibilityLabel(loc("Pick \(fruit.name)", "\(fruit.nameTR) topla"))
                 .accessibilityIdentifier("farm.fruit.\(fruit.id)")
             }
-            Text(fruit.name)
+            Text(L10n.english(fruit.name))
                 .font(.system(size: 10, weight: .heavy, design: .rounded))
                 .foregroundStyle(Theme.ink)
                 .padding(.horizontal, 6).padding(.vertical, 2)
@@ -530,7 +538,7 @@ struct GardenFarmView: View {
                 Text(animal.emoji).font(.system(size: size))
                     .scaleEffect(happy && !store.playerSettings.reducedMotion ? 1.2 : 1)
                     .rotationEffect(.degrees(shakingAnimal == animal.id ? 12 : 0))
-                Text(animal.name)
+                Text(L10n.english(animal.name))
                     .font(.system(size: 10, weight: .heavy, design: .rounded))
                     .foregroundStyle(Theme.ink)
                     .padding(.horizontal, 6).padding(.vertical, 1)
@@ -584,11 +592,11 @@ struct GardenFarmView: View {
                         Button {
                             selectedFood = food.id
                             Feedback.play(.tap, settings: store.playerSettings)
-                            say("\(food.emoji) \(food.name)", food.nameTR, speak: [(food.name, "en-US")])
+                            say("\(food.emoji) \(L10n.english(food.name))", food.nameTR, speak: [(food.name, "en-US")])
                         } label: {
                             VStack(spacing: 1) {
                                 Text(food.emoji).font(.system(size: 32))
-                                Text(food.name).font(.caption.weight(.heavy)).foregroundStyle(Theme.ink)
+                                Text(L10n.english(food.name)).font(.caption.weight(.heavy)).foregroundStyle(Theme.ink)
                                 Text(count.map { "\(food.nameTR) ×\($0)" } ?? food.nameTR).font(.caption2.weight(.semibold)).foregroundStyle(Theme.inkSoft)
                             }
                             .lineLimit(1).minimumScaleFactor(0.7)
@@ -615,7 +623,7 @@ struct GardenFarmView: View {
     private func pick(_ fruit: RoutineThing) {
         guard store.pickFruit(fruit.id) else { return }
         Feedback.play(.success, settings: store.playerSettings)
-        say("\(fruit.emoji) \(fruit.name)!", fruit.nameTR, speak: [("\(fruit.name)!", "en-US")])
+        say("\(fruit.emoji) \(L10n.english(fruit.name))", fruit.nameTR, speak: [(fruit.name, "en-US")])
         celebrateIfDone()
     }
 
@@ -625,7 +633,7 @@ struct GardenFarmView: View {
         case .happy:
             Feedback.play(.success, settings: store.playerSettings)
             happyAnimal = animal.id
-            say("\(animal.emoji) \(animal.name)!", animal.nameTR, speak: [("\(animal.name)!", "en-US")])
+            say("\(animal.emoji) \(L10n.english(animal.name))", animal.nameTR, speak: [(animal.name, "en-US")])
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(1.2))
                 if happyAnimal == animal.id { happyAnimal = nil }

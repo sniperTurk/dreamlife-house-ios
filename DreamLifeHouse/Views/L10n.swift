@@ -121,3 +121,31 @@ extension L10n {
         "cat": "kedi", "dog": "köpek",
     ]
 }
+
+
+// MARK: - English pronunciation for Turkish children
+extension L10n {
+    /// How an English word sounds, written with Turkish letters.
+    static let pronunciation: [String: String] = [
+        "Table": "teybıl", "Cupboard": "kabırd", "Oven": "avın", "Fridge": "fric", "Plate": "pleyt",
+        "Pot": "pat", "Pan": "pen", "Sink": "sink", "TV": "ti-vi", "Armchair": "armçer",
+        "Bookshelf": "bukşelf", "Fireplace": "fayırpleys", "Lamp": "lemp", "Clock": "klak",
+        "Wardrobe": "wordroub", "Desk lamp": "desk lemp", "Teddy bear": "tedi ber", "Globe": "gloub",
+        "Chair": "çeır", "Pillow": "pilou", "Toilet": "toylıt", "Washing machine": "woşing mışiin",
+        "Mirror": "mirır", "Towel": "tauıl", "Duck": "dak", "Tent": "tent", "Birdhouse": "bördhaus",
+        "Ball": "bool", "Umbrella": "ambrela", "Bike": "bayk", "Carrot": "kerıt",
+        "T-shirt": "tişört", "Shorts": "şorts", "Socks": "saks", "Sneakers": "sniikırz", "Cap": "kep",
+        "Egg": "eg", "Bread": "bred", "Cheese": "çiiz", "Olives": "alivz", "Tomato": "tımeytou",
+        "Cucumber": "kyukambır", "Honey": "hani", "Milk": "milk",
+        "Apple": "epıl", "Orange": "orınc", "Pear": "peır", "Cherry": "çeri",
+        "Chicken": "çikın", "Cow": "kau", "Sheep": "şiip", "Rabbit": "rebit", "Horse": "hors",
+        "Corn": "korn", "Grass": "gres",
+        "Good morning": "gud morning", "I'm hungry": "aym hangri", "I'm full": "aym ful"
+    ]
+
+    /// "Fridge (fric)" for Turkish players; the plain word otherwise.
+    static func english(_ word: String) -> String {
+        guard isTurkish, let p = pronunciation[word] else { return word }
+        return "\(word) (\(p))"
+    }
+}

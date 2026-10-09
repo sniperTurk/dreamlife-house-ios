@@ -308,7 +308,7 @@ struct HouseView: View {
 
  /// The character says the item's name in both languages, with a speech bubble.
  private func announce(_ item: FurnitureItem) {
-  let tr = "\(item.nameTR)!", en = "\(item.name)!"
+  let tr = "\(item.nameTR)!", en = L10n.english(item.name)
   withAnimation(store.motionAnimationDuration == 0 ? nil : .spring(duration: 0.3)) {
    speech = L10n.isTurkish ? "\(tr)  \(en)" : "\(en)  \(tr)"
   }
@@ -599,6 +599,7 @@ private struct RoomStage: View {
 }
 
 private struct SpeechBubble: View {
+ @EnvironmentObject var store: GameStore
  let text: String
  var body: some View {
   VStack(spacing: 0) {
@@ -616,6 +617,7 @@ private struct SpeechBubble: View {
   .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
   .accessibilityElement(children: .ignore)
   .accessibilityLabel(text)
+  .onTapGesture { Speaker.shared.repeatLast(settings: store.playerSettings) }
  }
 }
 

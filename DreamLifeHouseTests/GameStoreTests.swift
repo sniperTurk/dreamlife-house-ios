@@ -2665,4 +2665,16 @@ extension GameStoreTests {
         XCTAssertEqual(restored.fruitsLeft(on: "pear"), GameStore.fruitsPerTreePerDay)
         XCTAssertEqual(restored.fruitBasket["pear"], 1)
     }
+
+    // MARK: Speech text
+
+    func testSpeechTextDropsEmojiAndEveryEnglishWordHasAPronunciation() {
+        XCTAssertEqual(Speaker.clean("Günaydın! ☀️"), "Günaydın!")
+        XCTAssertEqual(Speaker.clean("🐔 Chicken"), "Chicken")
+        XCTAssertEqual(Speaker.clean("🍳 Egg · Yumurta"), "Egg , Yumurta")
+        let (store, _) = makeStore()
+        let words = store.furniture.map(\.name) + store.routineClothes.map(\.name) + store.breakfastFoods.map(\.name)
+            + store.fruits.map(\.name) + store.farmAnimals.map(\.name) + store.animalFoods.map(\.name)
+        for word in words { XCTAssertNotNil(L10n.pronunciation[word], "No pronunciation for \(word)") }
+    }
 }

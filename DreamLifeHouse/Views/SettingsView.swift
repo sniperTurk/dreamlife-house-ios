@@ -19,6 +19,26 @@ struct SettingsView: View {
                     Toggle(loc("Haptics", "Titreşim"), isOn: binding(\.hapticsEnabled))
                     Toggle(loc("Reduce motion", "Hareketi azalt"), isOn: binding(\.reducedMotion))
                 }
+                Section {
+                    Button {
+                        Speaker.shared.sayBoth(turkish: "Elma", english: "Apple", settings: store.playerSettings)
+                    } label: {
+                        Label(loc("Test the voice: Apple (epıl)", "Sesi dene: Elma · Apple (epıl)"), systemImage: "speaker.wave.2.fill")
+                    }
+                    .disabled(!store.playerSettings.soundEnabled)
+                    .accessibilityIdentifier("settings.voiceTest")
+                    if !Speaker.shared.hasEnhancedEnglishVoice {
+                        Text(loc("For a clearer English voice, download one on this iPhone/iPad: Settings › Accessibility › Spoken Content › Voices › English › Samantha (Enhanced) or Ava (Premium). Restart the game afterwards.",
+                                 "Daha net İngilizce ses için cihaza ücretsiz bir ses indirin: Ayarlar › Erişilebilirlik › Seslendirilen İçerik › Sesler › İngilizce › Samantha (Gelişmiş) veya Ava (Premium). Sonra oyunu yeniden açın."))
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                } header: {
+                    Text(loc("Voice", "Seslendirme"))
+                } footer: {
+                    Text(loc("English words are spoken slowly twice. Tap a speech bubble to hear it again.",
+                             "İngilizce kelimeler yavaşça iki kez söylenir. Tekrar dinlemek için konuşma balonuna dokunun."))
+                }
                 Section(loc("Family-friendly controls", "Aile dostu ayarlar")) {
                     Toggle(loc("Confirm purchases", "Satın almaları onayla"), isOn: binding(\.purchaseConfirmation))
                     Text(loc("When on, the game asks before spending in-game coins on decorations and outfits. DreamLife House has no real-money purchases, ads or accounts.", "Açıkken oyun, dekorasyon ve kıyafetlere jeton harcamadan önce sorar. DreamLife House\'ta gerçek parayla satın alma, reklam ya da hesap yoktur."))
